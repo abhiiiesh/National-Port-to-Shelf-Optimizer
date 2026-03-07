@@ -1,0 +1,16 @@
+{
+  "name": "@port-to-shelf/shared-types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types and interfaces for Port-to-Shelf Optimizer",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

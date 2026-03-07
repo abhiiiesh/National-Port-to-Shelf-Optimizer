@@ -1,0 +1,16 @@
+{
+  "name": "@port-to-shelf/slot-management",
+  "version": "1.0.0",
+  "description": "Slot Management Service",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "test": "jest",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@port-to-shelf/shared-types": "^1.0.0",
+    "fast-check": "^3.15.0"
+  }
+}

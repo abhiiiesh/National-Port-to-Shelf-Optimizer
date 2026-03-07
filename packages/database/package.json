@@ -1,0 +1,24 @@
+{
+  "name": "@port-to-shelf/database",
+  "version": "1.0.0",
+  "description": "Database migrations and connection management for Port-to-Shelf Optimizer",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "migrate:up": "node-pg-migrate up",
+    "migrate:down": "node-pg-migrate down",
+    "migrate:create": "node-pg-migrate create",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch --runInBand",
+    "test:coverage": "jest --coverage --runInBand"
+  },
+  "dependencies": {
+    "pg": "^8.11.3",
+    "node-pg-migrate": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.10.9",
+    "typescript": "^5.3.3"
+  }
+}

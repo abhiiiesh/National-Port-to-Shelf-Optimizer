@@ -1,0 +1,23 @@
+{
+  "name": "@port-to-shelf/authentication",
+  "version": "1.0.0",
+  "description": "Authentication Service",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "test": "jest",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@port-to-shelf/shared-types": "^1.0.0",
+    "@port-to-shelf/database": "^1.0.0",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "fast-check": "^3.15.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.5"
+  }
+}

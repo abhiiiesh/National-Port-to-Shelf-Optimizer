@@ -6,7 +6,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
 
 ## Tasks
 
-- [ ] 1. Project setup and infrastructure foundation
+- [x] 1. Project setup and infrastructure foundation
   - Initialize TypeScript monorepo with workspaces for each microservice
   - Configure build tools (tsconfig, webpack/esbuild)
   - Set up testing frameworks (Jest for unit tests, fast-check for property tests)
@@ -20,61 +20,61 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
   - Verify all services can import shared types correctly
   - _Requirements: 9.3_
 
-- [ ] 2. Database schema and data layer
-  - [ ] 2.1 Implement database schema
+- [x] 2. Database schema and data layer
+  - [x] 2.1 Implement database schema
     - Create PostgreSQL migration scripts for all tables (vessels, containers, auctions, bids, etc.)
     - Add indexes for performance (journey_events, bids, ulip_events)
     - Implement foreign key constraints and check constraints
     - _Requirements: 9.3, 17.1, 17.2_
 
-  - [ ] 2.2 Create database connection and ORM setup
+  - [x] 2.2 Create database connection and ORM setup
     - Configure TypeORM or Prisma for database access
     - Implement connection pooling with automatic reconnection
     - Create base repository pattern for CRUD operations
     - _Requirements: 9.3, 9.4_
 
-  - [ ]* 2.3 Write property tests for data integrity
+  - [x] 2.3 Write property tests for data integrity
     - **Property 42: Data Integrity Constraints**
     - **Validates: Requirements 9.3**
 
-- [ ] 3. Checkpoint - Database foundation
+- [x] 3. Checkpoint - Database foundation
   - Ensure all migrations run successfully
   - Verify database constraints are enforced
   - Ask the user if questions arise
 
 
 - [ ] 4. Authentication and authorization service
-  - [ ] 4.1 Implement authentication service
+  - [x] 4.1 Implement authentication service
     - Create User entity and repository
     - Implement password hashing (bcrypt)
     - Implement JWT token generation and validation
     - Create authenticate() and validateToken() methods
     - _Requirements: 10.1, 10.2_
 
-  - [ ] 4.2 Implement role-based authorization
+  - [x] 4.2 Implement role-based authorization
     - Define Role enum (RETAILER, PORT_OPERATOR, TRANSPORT_COORDINATOR, SYSTEM_ADMINISTRATOR)
     - Implement authorize() method with role checking
     - Create authorization middleware for API routes
     - _Requirements: 10.2, 10.3_
 
-  - [ ] 4.3 Implement authentication logging
+  - [x] 4.3 Implement authentication logging
     - Log failed authentication attempts with username, timestamp, and reason
     - Create security event monitoring
     - _Requirements: 10.5_
 
-  - [ ]* 4.4 Write property test for authentication
+  - [x] 4.4 Write property test for authentication
     - **Property 43: Authentication Success and Failure**
     - **Validates: Requirements 10.1**
 
-  - [ ]* 4.5 Write property test for authorization
+  - [x] 4.5 Write property test for authorization
     - **Property 44: Authorization Enforcement**
     - **Validates: Requirements 10.3**
 
-  - [ ]* 4.6 Write property test for failed authentication logging
+  - [x] 4.6 Write property test for failed authentication logging
     - **Property 46: Failed Authentication Logging**
     - **Validates: Requirements 10.5**
 
-  - [ ]* 4.7 Write unit tests for authentication edge cases
+  - [x] 4.7 Write unit tests for authentication edge cases
     - Test expired tokens
     - Test invalid credentials
     - Test missing authorization headers
@@ -88,7 +88,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Integrate authentication middleware
     - _Requirements: 10.1_
 
-  - [ ]* 5.2 Write unit tests for API Gateway
+  - [ ] 5.2 Write unit tests for API Gateway
     - Test rate limiting enforcement
     - Test authentication requirement on protected routes
     - Test CORS headers
@@ -107,7 +107,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Implement event serialization/deserialization
     - _Requirements: 9.1, 9.2_
 
-  - [ ]* 6.3 Write unit tests for event bus
+  - [ ] 6.3 Write unit tests for event bus
     - Test event publishing
     - Test event subscription
     - Test idempotency with duplicate event IDs
@@ -138,27 +138,27 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Publish vessel.arrived events
     - _Requirements: 1.2, 1.3_
 
-  - [ ]* 8.4 Write property test for vessel tracking initialization
+  - [ ] 8.4 Write property test for vessel tracking initialization
     - **Property 1: Vessel Tracking Initialization**
     - **Validates: Requirements 1.1**
 
-  - [ ]* 8.5 Write property test for position update recalculation
+  - [ ] 8.5 Write property test for position update recalculation
     - **Property 2: Position Update Triggers Recalculation**
     - **Validates: Requirements 1.2**
 
-  - [ ]* 8.6 Write property test for arrival recording
+  - [ ] 8.6 Write property test for arrival recording
     - **Property 3: Arrival Recording Completeness**
     - **Validates: Requirements 1.3**
 
-  - [ ]* 8.7 Write property test for vessel registry
+  - [ ] 8.7 Write property test for vessel registry
     - **Property 4: Vessel Registry Completeness**
     - **Validates: Requirements 1.4**
 
-  - [ ]* 8.8 Write property test for vessel query response
+  - [ ] 8.8 Write property test for vessel query response
     - **Property 5: Vessel Query Response Completeness**
     - **Validates: Requirements 1.5**
 
-  - [ ]* 8.9 Write unit tests for vessel tracking edge cases
+  - [ ] 8.9 Write unit tests for vessel tracking edge cases
     - Test vessel with empty manifest
     - Test duplicate IMO number rejection
     - Test invalid position coordinates
@@ -192,39 +192,39 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Publish demurrage.alert events
     - _Requirements: 2.2, 2.5, 6.2_
 
-  - [ ]* 9.5 Write property test for container tracking record creation
+  - [ ] 9.5 Write property test for container tracking record creation
     - **Property 6: Container Tracking Record Creation**
     - **Validates: Requirements 2.1**
 
-  - [ ]* 9.6 Write property test for transport mode transition
+  - [ ] 9.6 Write property test for transport mode transition
     - **Property 7: Transport Mode Transition Recording**
     - **Validates: Requirements 2.2**
 
-  - [ ]* 9.7 Write property test for journey history completeness
+  - [ ] 9.7 Write property test for journey history completeness
     - **Property 8: Journey History Completeness**
     - **Validates: Requirements 2.3**
 
-  - [ ]* 9.8 Write property test for container location consistency
+  - [ ] 9.8 Write property test for container location consistency
     - **Property 9: Container Location Consistency**
     - **Validates: Requirements 2.4**
 
-  - [ ]* 9.9 Write property test for journey completion marking
+  - [ ] 9.9 Write property test for journey completion marking
     - **Property 10: Journey Completion Marking**
     - **Validates: Requirements 2.5**
 
-  - [ ]* 9.10 Write property test for demurrage-free time calculation
+  - [ ] 9.10 Write property test for demurrage-free time calculation
     - **Property 25: Demurrage-Free Time Calculation**
     - **Validates: Requirements 6.1**
 
-  - [ ]* 9.11 Write property test for high priority flagging
+  - [ ] 9.11 Write property test for high priority flagging
     - **Property 26: High Priority Flagging**
     - **Validates: Requirements 6.2**
 
-  - [ ]* 9.12 Write property test for retailer data isolation
+  - [ ] 9.12 Write property test for retailer data isolation
     - **Property 45: Retailer Data Isolation**
     - **Validates: Requirements 10.4**
 
-  - [ ]* 9.13 Write unit tests for container tracking edge cases
+  - [ ] 9.13 Write unit tests for container tracking edge cases
     - Test invalid ISO 6346 container ID
     - Test invalid UN/LOCODE
     - Test container with no journey events
@@ -261,23 +261,23 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Publish prediction.updated events
     - _Requirements: 3.1, 3.2_
 
-  - [ ]* 11.5 Write property test for prediction generation
+  - [ ] 11.5 Write property test for prediction generation
     - **Property 11: Prediction Generation for En-Route Vessels**
     - **Validates: Requirements 3.1**
 
-  - [ ]* 11.6 Write property test for prediction update
+  - [ ] 11.6 Write property test for prediction update
     - **Property 12: Prediction Update on New Data**
     - **Validates: Requirements 3.2**
 
-  - [ ]* 11.7 Write property test for low confidence flagging
+  - [ ] 11.7 Write property test for low confidence flagging
     - **Property 13: Low Confidence Flagging**
     - **Validates: Requirements 3.4**
 
-  - [ ]* 11.8 Write property test for accuracy metrics storage
+  - [ ] 11.8 Write property test for accuracy metrics storage
     - **Property 14: Prediction Accuracy Metrics Storage**
     - **Validates: Requirements 3.5**
 
-  - [ ]* 11.9 Write unit tests for prediction edge cases
+  - [ ] 11.9 Write unit tests for prediction edge cases
     - Test prediction with missing weather data
     - Test prediction for vessel at port
     - Test prediction accuracy evaluation
@@ -308,27 +308,27 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Publish slot.reserved events
     - _Requirements: 4.1, 4.5_
 
-  - [ ]* 12.5 Write property test for slot creation from predictions
+  - [ ] 12.5 Write property test for slot creation from predictions
     - **Property 15: Slot Creation from Predictions**
     - **Validates: Requirements 4.1**
 
-  - [ ]* 12.6 Write property test for capacity constraint enforcement
+  - [ ] 12.6 Write property test for capacity constraint enforcement
     - **Property 18: Capacity Constraint Enforcement**
     - **Validates: Requirements 4.4**
 
-  - [ ]* 12.7 Write property test for slot assignment updates availability
+  - [ ] 12.7 Write property test for slot assignment updates availability
     - **Property 19: Slot Assignment Updates Availability**
     - **Validates: Requirements 4.5**
 
-  - [ ]* 12.8 Write property test for capacity update processing
+  - [ ] 12.8 Write property test for capacity update processing
     - **Property 32: Capacity Update Processing**
     - **Validates: Requirements 7.3**
 
-  - [ ]* 12.9 Write property test for separate mode capacity tracking
+  - [ ] 12.9 Write property test for separate mode capacity tracking
     - **Property 34: Separate Mode Capacity Tracking**
     - **Validates: Requirements 7.5**
 
-  - [ ]* 12.10 Write unit tests for slot management edge cases
+  - [ ] 12.10 Write unit tests for slot management edge cases
     - Test slot creation with zero capacity
     - Test reservation expiration
     - Test capacity decrease affecting future slots
@@ -374,39 +374,39 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Publish bid.submitted events
     - _Requirements: 4.2, 4.3, 5.5_
 
-  - [ ]* 14.6 Write property test for auction initiation
+  - [ ] 14.6 Write property test for auction initiation
     - **Property 16: Auction Initiation on Slot Creation**
     - **Validates: Requirements 4.2**
 
-  - [ ]* 14.7 Write property test for highest bidder wins
+  - [ ] 14.7 Write property test for highest bidder wins
     - **Property 17: Highest Bidder Wins**
     - **Validates: Requirements 4.3**
 
-  - [ ]* 14.8 Write property test for auction filtering by destination
+  - [ ] 14.8 Write property test for auction filtering by destination
     - **Property 20: Auction Filtering by Destination**
     - **Validates: Requirements 5.1**
 
-  - [ ]* 14.9 Write property test for bid validation
+  - [ ] 14.9 Write property test for bid validation
     - **Property 21: Bid Validation**
     - **Validates: Requirements 5.2**
 
-  - [ ]* 14.10 Write property test for accepted bid confirmation
+  - [ ] 14.10 Write property test for accepted bid confirmation
     - **Property 22: Accepted Bid Confirmation Completeness**
     - **Validates: Requirements 5.3**
 
-  - [ ]* 14.11 Write property test for container ownership enforcement
+  - [ ] 14.11 Write property test for container ownership enforcement
     - **Property 23: Container Ownership Enforcement**
     - **Validates: Requirements 5.4**
 
-  - [ ]* 14.12 Write property test for auction end notification
+  - [ ] 14.12 Write property test for auction end notification
     - **Property 24: Auction End Notification**
     - **Validates: Requirements 5.5**
 
-  - [ ]* 14.13 Write property test for priority container slot preference
+  - [ ] 14.13 Write property test for priority container slot preference
     - **Property 27: Priority Container Slot Preference**
     - **Validates: Requirements 6.3**
 
-  - [ ]* 14.14 Write unit tests for auction edge cases
+  - [ ] 14.14 Write unit tests for auction edge cases
     - Test auction with no bids
     - Test auction with single bid
     - Test bid on expired auction
@@ -435,27 +435,27 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Subscribe to auction.closed events
     - _Requirements: 8.1, 8.4_
 
-  - [ ]* 15.5 Write property test for timeline calculation
+  - [ ] 15.5 Write property test for timeline calculation
     - **Property 35: Port-to-Shelf Timeline Calculation**
     - **Validates: Requirements 8.1**
 
-  - [ ]* 15.6 Write property test for average demurrage cost
+  - [ ] 15.6 Write property test for average demurrage cost
     - **Property 36: Average Demurrage Cost Calculation**
     - **Validates: Requirements 8.2**
 
-  - [ ]* 15.7 Write property test for report metrics completeness
+  - [ ] 15.7 Write property test for report metrics completeness
     - **Property 37: Report Metrics Completeness**
     - **Validates: Requirements 8.3**
 
-  - [ ]* 15.8 Write property test for auction metrics tracking
+  - [ ] 15.8 Write property test for auction metrics tracking
     - **Property 38: Auction Metrics Tracking**
     - **Validates: Requirements 8.4**
 
-  - [ ]* 15.9 Write property test for baseline comparison
+  - [ ] 15.9 Write property test for baseline comparison
     - **Property 39: Baseline Comparison Metrics**
     - **Validates: Requirements 8.5**
 
-  - [ ]* 15.10 Write unit tests for metrics edge cases
+  - [ ] 15.10 Write unit tests for metrics edge cases
     - Test metrics with no completed journeys
     - Test metrics with zero demurrage costs
     - Test report generation without baseline
@@ -489,39 +489,39 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Implement conflict resolution with timestamp precedence
     - _Requirements: 12.3, 12.4, 12.5_
 
-  - [ ]* 17.4 Write property test for OAuth 2.0 authentication
+  - [ ] 17.4 Write property test for OAuth 2.0 authentication
     - **Property 47: OAuth 2.0 ULIP Authentication**
     - **Validates: Requirements 11.2**
 
-  - [ ]* 17.5 Write property test for ULIP data format compliance
+  - [ ] 17.5 Write property test for ULIP data format compliance
     - **Property 48: ULIP Data Format Compliance**
     - **Validates: Requirements 11.3**
 
-  - [ ]* 17.6 Write property test for rate limit backoff
+  - [ ] 17.6 Write property test for rate limit backoff
     - **Property 49: Rate Limit Backoff**
     - **Validates: Requirements 11.4**
 
-  - [ ]* 17.7 Write property test for connection resilience
+  - [ ] 17.7 Write property test for connection resilience
     - **Property 50: ULIP Connection Resilience**
     - **Validates: Requirements 11.5**
 
-  - [ ]* 17.8 Write property test for container event publishing
+  - [ ] 17.8 Write property test for container event publishing
     - **Property 51: Container Event Publishing to ULIP**
     - **Validates: Requirements 12.1**
 
-  - [ ]* 17.9 Write property test for vessel data synchronization
+  - [ ] 17.9 Write property test for vessel data synchronization
     - **Property 52: Vessel Data Synchronization to ULIP**
     - **Validates: Requirements 12.2**
 
-  - [ ]* 17.10 Write property test for ULIP data validation
+  - [ ] 17.10 Write property test for ULIP data validation
     - **Property 53: ULIP Event Data Validation**
     - **Validates: Requirements 12.4**
 
-  - [ ]* 17.11 Write property test for timestamp-based conflict resolution
+  - [ ] 17.11 Write property test for timestamp-based conflict resolution
     - **Property 54: Timestamp-Based Conflict Resolution**
     - **Validates: Requirements 12.5**
 
-  - [ ]* 17.12 Write unit tests for ULIP integration edge cases
+  - [ ] 17.12 Write unit tests for ULIP integration edge cases
     - Test authentication failure
     - Test token expiration
     - Test rate limit response handling
@@ -537,23 +537,23 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Publish container pickup requests
     - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5_
 
-  - [ ]* 18.2 Write property test for berthing notification processing
+  - [ ] 18.2 Write property test for berthing notification processing
     - **Property 55: Berthing Notification Processing**
     - **Validates: Requirements 13.2**
 
-  - [ ]* 18.3 Write property test for gate event processing
+  - [ ] 18.3 Write property test for gate event processing
     - **Property 56: Gate Event Processing**
     - **Validates: Requirements 13.3**
 
-  - [ ]* 18.4 Write property test for port data query
+  - [ ] 18.4 Write property test for port data query
     - **Property 57: Port Data Query for Slot Planning**
     - **Validates: Requirements 13.4**
 
-  - [ ]* 18.5 Write property test for container pickup request
+  - [ ] 18.5 Write property test for container pickup request
     - **Property 58: Container Pickup Request Publishing**
     - **Validates: Requirements 13.5**
 
-  - [ ]* 18.6 Write unit tests for port integration edge cases
+  - [ ] 18.6 Write unit tests for port integration edge cases
     - Test berthing notification with missing data
     - Test gate event for unknown container
     - Test port data query timeout
@@ -568,31 +568,31 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Query rail routes and transit times
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5_
 
-  - [ ]* 19.2 Write property test for rail capacity data access
+  - [ ] 19.2 Write property test for rail capacity data access
     - **Property 59: Rail Capacity Data Access**
     - **Validates: Requirements 14.1**
 
-  - [ ]* 19.3 Write property test for rail booking request creation
+  - [ ] 19.3 Write property test for rail booking request creation
     - **Property 60: Rail Booking Request Creation**
     - **Validates: Requirements 14.2**
 
-  - [ ]* 19.4 Write property test for rail tracking update processing
+  - [ ] 19.4 Write property test for rail tracking update processing
     - **Property 61: Rail Tracking Update Processing**
     - **Validates: Requirements 14.3**
 
-  - [ ]* 19.5 Write property test for rail delay notification
+  - [ ] 19.5 Write property test for rail delay notification
     - **Property 62: Rail Delay Notification Processing**
     - **Validates: Requirements 14.4**
 
-  - [ ]* 19.6 Write property test for rail route query
+  - [ ] 19.6 Write property test for rail route query
     - **Property 63: Rail Route Query**
     - **Validates: Requirements 14.5**
 
-  - [ ]* 19.7 Write property test for rail booking communication
+  - [ ] 19.7 Write property test for rail booking communication
     - **Property 30: Rail Booking Communication**
     - **Validates: Requirements 7.1**
 
-  - [ ]* 19.8 Write unit tests for rail integration edge cases
+  - [ ] 19.8 Write unit tests for rail integration edge cases
     - Test rail booking with no available capacity
     - Test rail delay notification processing
     - Test rail route query with no routes
@@ -613,31 +613,31 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Process delivery confirmations
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5_
 
-  - [ ]* 21.2 Write property test for truck fleet availability access
+  - [ ] 21.2 Write property test for truck fleet availability access
     - **Property 64: Truck Fleet Availability Access**
     - **Validates: Requirements 15.1**
 
-  - [ ]* 21.3 Write property test for truck transport order creation
+  - [ ] 21.3 Write property test for truck transport order creation
     - **Property 65: Truck Transport Order Creation**
     - **Validates: Requirements 15.2**
 
-  - [ ]* 21.4 Write property test for GPS location update processing
+  - [ ] 21.4 Write property test for GPS location update processing
     - **Property 66: GPS Truck Location Update Processing**
     - **Validates: Requirements 15.3**
 
-  - [ ]* 21.5 Write property test for FASTag toll data access
+  - [ ] 21.5 Write property test for FASTag toll data access
     - **Property 67: FASTag Toll Data Access**
     - **Validates: Requirements 15.4**
 
-  - [ ]* 21.6 Write property test for delivery confirmation processing
+  - [ ] 21.6 Write property test for delivery confirmation processing
     - **Property 68: Delivery Confirmation Processing**
     - **Validates: Requirements 15.5**
 
-  - [ ]* 21.7 Write property test for road booking communication
+  - [ ] 21.7 Write property test for road booking communication
     - **Property 31: Road Booking Communication**
     - **Validates: Requirements 7.2**
 
-  - [ ]* 21.8 Write unit tests for road transport edge cases
+  - [ ] 21.8 Write unit tests for road transport edge cases
     - Test truck booking with no available trucks
     - Test GPS update for unknown truck
     - Test delivery confirmation for wrong container
@@ -652,27 +652,27 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Process regulatory hold alerts
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5_
 
-  - [ ]* 22.2 Write property test for customs status query
+  - [ ] 22.2 Write property test for customs status query
     - **Property 69: Customs Status Query**
     - **Validates: Requirements 16.1**
 
-  - [ ]* 22.3 Write property test for customs clearance notification
+  - [ ] 22.3 Write property test for customs clearance notification
     - **Property 70: Customs Clearance Notification Processing**
     - **Validates: Requirements 16.2**
 
-  - [ ]* 22.4 Write property test for customs document submission
+  - [ ] 22.4 Write property test for customs document submission
     - **Property 71: Customs Document Submission**
     - **Validates: Requirements 16.3**
 
-  - [ ]* 22.5 Write property test for ICEGATE data access
+  - [ ] 22.5 Write property test for ICEGATE data access
     - **Property 72: ICEGATE Data Access**
     - **Validates: Requirements 16.4**
 
-  - [ ]* 22.6 Write property test for regulatory hold alert
+  - [ ] 22.6 Write property test for regulatory hold alert
     - **Property 73: Regulatory Hold Alert Processing**
     - **Validates: Requirements 16.5**
 
-  - [ ]* 22.7 Write unit tests for customs integration edge cases
+  - [ ] 22.7 Write unit tests for customs integration edge cases
     - Test customs status for unknown container
     - Test document submission failure
     - Test regulatory hold processing
@@ -687,19 +687,19 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Implement ULIP JSON schema validator
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5_
 
-  - [ ]* 23.2 Write property test for ISO 6346 format
+  - [ ] 23.2 Write property test for ISO 6346 format
     - **Property 74: ISO 6346 Container ID Format**
     - **Validates: Requirements 17.1**
 
-  - [ ]* 23.3 Write property test for UN/LOCODE format
+  - [ ] 23.3 Write property test for UN/LOCODE format
     - **Property 75: UN/LOCODE Location Format**
     - **Validates: Requirements 17.2**
 
-  - [ ]* 23.4 Write property test for ISO 8601 timestamp format
+  - [ ] 23.4 Write property test for ISO 8601 timestamp format
     - **Property 76: ISO 8601 Timestamp Format with IST**
     - **Validates: Requirements 17.3**
 
-  - [ ]* 23.5 Write property test for ULIP event taxonomy
+  - [ ] 23.5 Write property test for ULIP event taxonomy
     - **Property 77: ULIP Event Taxonomy Compliance**
     - **Validates: Requirements 17.4**
 
@@ -707,7 +707,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - **Property 78: ULIP JSON Schema Validation (Round-Trip)**
     - **Validates: Requirements 17.5**
 
-  - [ ]* 23.7 Write unit tests for data format validation edge cases
+  - [ ] 23.7 Write unit tests for data format validation edge cases
     - Test invalid ISO 6346 container IDs
     - Test invalid UN/LOCODE formats
     - Test timestamp timezone conversion
@@ -722,23 +722,23 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Contribute anonymized operational data
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5_
 
-  - [ ]* 24.2 Write property test for performance metrics publishing
+  - [ ] 24.2 Write property test for performance metrics publishing
     - **Property 79: Performance Metrics Publishing to ULIP**
     - **Validates: Requirements 18.1**
 
-  - [ ]* 24.3 Write property test for ULIP dashboard data access
+  - [ ] 24.3 Write property test for ULIP dashboard data access
     - **Property 80: ULIP Dashboard Data Access**
     - **Validates: Requirements 18.2**
 
-  - [ ]* 24.4 Write property test for report ULIP data inclusion
+  - [ ] 24.4 Write property test for report ULIP data inclusion
     - **Property 81: Report ULIP Data Inclusion**
     - **Validates: Requirements 18.3**
 
-  - [ ]* 24.5 Write property test for anonymized data contribution
+  - [ ] 24.5 Write property test for anonymized data contribution
     - **Property 82: Anonymized Data Contribution to ULIP**
     - **Validates: Requirements 18.5**
 
-  - [ ]* 24.6 Write unit tests for analytics integration edge cases
+  - [ ] 24.6 Write unit tests for analytics integration edge cases
     - Test metrics publishing with missing data
     - Test dashboard data access timeout
     - Test anonymization of sensitive data
@@ -763,15 +763,15 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test recovery procedures
     - _Requirements: 9.4, 9.5_
 
-  - [ ]* 26.3 Write property test for container event persistence
+  - [ ] 26.3 Write property test for container event persistence
     - **Property 40: Container Event Persistence**
     - **Validates: Requirements 9.1**
 
-  - [ ]* 26.4 Write property test for auction transaction persistence
+  - [ ] 26.4 Write property test for auction transaction persistence
     - **Property 41: Auction Transaction Persistence**
     - **Validates: Requirements 9.2**
 
-  - [ ]* 26.5 Write unit tests for data persistence edge cases
+  - [ ] 26.5 Write unit tests for data persistence edge cases
     - Test transaction rollback on error
     - Test recovery from database connection failure
     - Test backup creation and restoration
@@ -797,7 +797,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Use event ID as idempotency key for ULIP event publishing
     - _Requirements: 9.1, 9.2_
 
-  - [ ]* 27.4 Write unit tests for error handling
+  - [ ] 27.4 Write unit tests for error handling
     - Test validation error responses
     - Test integration error retry logic
     - Test authorization error responses
@@ -832,7 +832,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - GET /reports - Generate reports
     - _Requirements: 8.3_
 
-  - [ ]* 28.5 Write integration tests for API endpoints
+  - [ ] 28.5 Write integration tests for API endpoints
     - Test vessel tracking flow
     - Test container tracking flow
     - Test auction bidding flow
@@ -859,41 +859,41 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Vessel with arrival prediction generator
     - _Requirements: All property tests_
 
-  - [ ]* 30.3 Write unit tests for generators
+  - [ ] 30.3 Write unit tests for generators
     - Test ISO 6346 generator produces valid IDs
     - Test UN/LOCODE generator produces valid codes
     - Test position generator produces valid coordinates
     - _Requirements: 17.1, 17.2_
 
 - [ ] 31. Integration testing and end-to-end flows
-  - [ ]* 31.1 Write integration test for vessel arrival to auction flow
+  - [ ] 31.1 Write integration test for vessel arrival to auction flow
     - Test vessel enters waters → prediction → slots created → auction initiated
     - _Requirements: 1.1, 3.1, 4.1, 4.2_
 
-  - [ ]* 31.2 Write integration test for container journey flow
+  - [ ] 31.2 Write integration test for container journey flow
     - Test container on vessel → at port → on rail → on truck → delivered
     - _Requirements: 2.1, 2.2, 2.5_
 
-  - [ ]* 31.3 Write integration test for auction bidding flow
+  - [ ] 31.3 Write integration test for auction bidding flow
     - Test auction created → bids submitted → auction closed → winners notified
     - _Requirements: 4.2, 5.2, 4.3, 5.5_
 
-  - [ ]* 31.4 Write integration test for ULIP synchronization flow
+  - [ ] 31.4 Write integration test for ULIP synchronization flow
     - Test container event → published to ULIP → received by subscribers
     - _Requirements: 12.1, 12.3_
 
-  - [ ]* 31.5 Write integration test for demurrage priority flow
+  - [ ] 31.5 Write integration test for demurrage priority flow
     - Test container at port → demurrage time low → flagged priority → prioritized in auction
     - _Requirements: 6.1, 6.2, 6.3_
 
 - [ ] 32. Performance testing and optimization
-  - [ ]* 32.1 Set up performance testing with k6
+  - [ ] 32.1 Set up performance testing with k6
     - Create load test scenarios
     - Create stress test scenarios
     - Create spike test scenarios
     - _Requirements: All_
 
-  - [ ]* 32.2 Run performance tests and optimize
+  - [ ] 32.2 Run performance tests and optimize
     - Test API response times (target: p95 < 500ms)
     - Test throughput (target: 10,000 req/s)
     - Test ULIP event publishing latency (target: < 30s)
@@ -915,7 +915,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Configure alerts for critical errors
     - _Requirements: All_
 
-  - [ ]* 33.3 Write unit tests for monitoring
+  - [ ] 33.3 Write unit tests for monitoring
     - Test log format
     - Test metric collection
     - Test alert triggering
