@@ -84,42 +84,53 @@ export const containerJourneyScenarioArbitrary = () =>
       status: fc.constant(ContainerStatus.ON_VESSEL),
       journey: fc.constant([]),
     }),
-    journey: fc.constantFrom(
-      {
-        eventType: 'container.mode.changed',
-        transportMode: TransportMode.VESSEL,
-        locationType: LocationType.PORT,
-      },
-      {
-        eventType: 'container.mode.changed',
-        transportMode: TransportMode.RAIL,
-        locationType: LocationType.RAIL_TERMINAL,
-      },
-      {
-        eventType: 'container.mode.changed',
-        transportMode: TransportMode.TRUCK,
-        locationType: LocationType.IN_TRANSIT,
-      },
-      {
-        eventType: 'container.delivered',
-        transportMode: TransportMode.TRUCK,
-        locationType: LocationType.WAREHOUSE,
-      }
-    ).chain((first) =>
-      fc.array(
-        fc.constantFrom(first),
-        { minLength: 4, maxLength: 4 }
-      ).map((states) =>
-        states.map((state, idx) => ({
+    journey: fc
+      .tuple(
+        unLocodeArbitrary(),
+        unLocodeArbitrary(),
+        unLocodeArbitrary(),
+        unLocodeArbitrary(),
+        fc.double({ min: -90, max: 90, noNaN: true, noDefaultInfinity: true }),
+        fc.double({ min: -180, max: 180, noNaN: true, noDefaultInfinity: true })
+      )
+      .map(([portId, railId, transitId, warehouseId, latitude, longitude]) => {
+        const states = [
+          {
+            eventType: 'container.mode.changed',
+            transportMode: TransportMode.VESSEL,
+            locationType: LocationType.PORT,
+            locationId: portId,
+          },
+          {
+            eventType: 'container.mode.changed',
+            transportMode: TransportMode.RAIL,
+            locationType: LocationType.RAIL_TERMINAL,
+            locationId: railId,
+          },
+          {
+            eventType: 'container.mode.changed',
+            transportMode: TransportMode.TRUCK,
+            locationType: LocationType.IN_TRANSIT,
+            locationId: transitId,
+          },
+          {
+            eventType: 'container.delivered',
+            transportMode: TransportMode.TRUCK,
+            locationType: LocationType.WAREHOUSE,
+            locationId: warehouseId,
+          },
+        ] as const;
+
+        return states.map((state, idx) => ({
           timestamp: new Date(Date.UTC(2026, 0, 1, idx)),
           eventType: state.eventType,
           location: {
             type: state.locationType,
-            id: 'INMUM',
+            id: state.locationId,
             name: 'Generated',
             coordinates: {
-              latitude: 19.076,
-              longitude: 72.8777,
+              latitude,
+              longitude,
               timestamp: new Date(Date.UTC(2026, 0, 1, idx)),
               speed: 0,
               heading: 0,
@@ -127,9 +138,8 @@ export const containerJourneyScenarioArbitrary = () =>
           },
           transportMode: state.transportMode,
           metadata: {},
-        }))
-      )
-    ),
+        }));
+      }),
   });
 
 export const auctionWithMultipleBidsArbitrary = () =>
