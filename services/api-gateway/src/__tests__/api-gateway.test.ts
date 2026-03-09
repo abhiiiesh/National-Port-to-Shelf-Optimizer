@@ -71,6 +71,53 @@ describe('API Gateway', () => {
     expect(metrics['AUTH_HEADER_INVALID:/api/v1/containers']).toBeGreaterThanOrEqual(1);
   });
 
+
+
+  test('cacheable GET endpoints return cached response within TTL', async () => {
+    let calls = 0;
+    const gateway = createGateway(
+      { responseCacheTtlMs: 60_000 },
+      validAuth,
+      undefined,
+      {
+        getPerformanceMetrics: async () => {
+          calls += 1;
+          return { request: calls };
+        },
+      }
+    );
+
+    const req = { method: 'GET', path: '/api/v1/metrics/performance', ip: '127.0.0.4', headers: { authorization: 'Bearer ok' } };
+    const first = await gateway.handle(req);
+    const second = await gateway.handle(req);
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(calls).toBe(1);
+    expect(JSON.parse(second.body).request).toBe(1);
+    expect(second.headers['x-cache']).toBe('HIT');
+  });
+
+  test('performance stats track latencies and cache counters', async () => {
+    const gateway = createGateway(
+      { responseCacheTtlMs: 60_000 },
+      validAuth,
+      undefined,
+      {
+        getReports: async () => [{ id: 'r1' }],
+      }
+    );
+
+    const req = { method: 'GET', path: '/api/v1/reports', ip: '127.0.0.5', headers: { authorization: 'Bearer ok' } };
+    await gateway.handle(req);
+    await gateway.handle(req);
+
+    const stats = gateway.getPerformanceStats();
+    expect(stats.global.requestCount).toBeGreaterThanOrEqual(2);
+    expect(stats.byRoute['GET /api/v1/reports'].requestCount).toBeGreaterThanOrEqual(2);
+    expect(stats.cache.hits).toBeGreaterThanOrEqual(1);
+  });
+
   test('OPTIONS request includes CORS headers', async () => {
     const gateway = createGateway({ corsOrigins: ['http://localhost:5173'] });
 

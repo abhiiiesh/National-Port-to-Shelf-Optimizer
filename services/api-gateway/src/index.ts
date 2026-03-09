@@ -9,6 +9,8 @@ export interface GatewayConfig {
   rateLimitWindowMs: number;
   rateLimitMaxRequests: number;
   serviceRoutes: Record<string, string>;
+  responseCacheTtlMs: number;
+  maxTrackedLatencySamples: number;
 }
 
 export interface RequestContext {
@@ -32,6 +34,23 @@ export interface ErrorResponse {
   code: string;
   timestamp: string;
   path: string;
+}
+
+
+export interface RequestLatencyStats {
+  requestCount: number;
+  averageMs: number;
+  p95Ms: number;
+}
+
+export interface GatewayPerformanceStats {
+  global: RequestLatencyStats;
+  byRoute: Record<string, RequestLatencyStats>;
+  cache: {
+    hits: number;
+    misses: number;
+    entries: number;
+  };
 }
 
 export interface LocalApiHandlers {
@@ -70,6 +89,8 @@ const defaultConfig: GatewayConfig = {
     '/api/v1/auctions': 'http://localhost:3003',
     '/api/v1/slots': 'http://localhost:3004',
   },
+  responseCacheTtlMs: 5_000,
+  maxTrackedLatencySamples: 1_000,
 };
 
 export function createTokenValidator(authServiceUrl?: string): TokenValidator {
@@ -144,6 +165,10 @@ export function createGateway(
   const proxyToService = proxy || createProxy();
   const rateState = new Map<string, { count: number; resetAt: number }>();
   const errorMetrics = new Map<string, number>();
+  const requestLatencies = new Map<string, number[]>();
+  const responseCache = new Map<string, { expiresAt: number; response: GatewayResponse }>();
+  let cacheHits = 0;
+  let cacheMisses = 0;
 
   const logError = (error: ErrorResponse): void => {
     const key = `${error.code}:${error.path}`;
@@ -252,12 +277,96 @@ export function createGateway(
     return undefined;
   };
 
+
+
+  const trackLatency = (routeKey: string, elapsedMs: number): void => {
+    const all = requestLatencies.get('__all__') ?? [];
+    all.push(elapsedMs);
+    if (all.length > cfg.maxTrackedLatencySamples) all.shift();
+    requestLatencies.set('__all__', all);
+
+    const route = requestLatencies.get(routeKey) ?? [];
+    route.push(elapsedMs);
+    if (route.length > cfg.maxTrackedLatencySamples) route.shift();
+    requestLatencies.set(routeKey, route);
+  };
+
+  const summarizeLatency = (samples: number[]): RequestLatencyStats => {
+    if (samples.length === 0) {
+      return { requestCount: 0, averageMs: 0, p95Ms: 0 };
+    }
+
+    const sorted = [...samples].sort((a, b) => a - b);
+    const p95Index = Math.max(0, Math.ceil(sorted.length * 0.95) - 1);
+    const averageMs = sorted.reduce((sum, value) => sum + value, 0) / sorted.length;
+
+    return {
+      requestCount: sorted.length,
+      averageMs: Number(averageMs.toFixed(2)),
+      p95Ms: Number(sorted[p95Index].toFixed(2)),
+    };
+  };
+
+  const buildCacheKey = (req: RequestContext): string | undefined => {
+    if (req.method !== 'GET') return undefined;
+    const cacheablePaths = ['/api/v1/metrics/performance', '/api/v1/reports'];
+    const isCacheable = cacheablePaths.includes(req.path);
+    if (!isCacheable) return undefined;
+
+    const query = req.query ? JSON.stringify(Object.entries(req.query).sort(([a], [b]) => a.localeCompare(b))) : '';
+    return `${req.method}:${req.path}:${query}`;
+  };
+
+  const getCachedResponse = (cacheKey: string): GatewayResponse | undefined => {
+    const entry = responseCache.get(cacheKey);
+    if (!entry) {
+      cacheMisses += 1;
+      return undefined;
+    }
+
+    if (Date.now() > entry.expiresAt) {
+      responseCache.delete(cacheKey);
+      cacheMisses += 1;
+      return undefined;
+    }
+
+    cacheHits += 1;
+    return { ...entry.response, headers: { ...entry.response.headers, 'x-cache': 'HIT' } };
+  };
+
+  const maybeSetCachedResponse = (cacheKey: string | undefined, response: GatewayResponse): void => {
+    if (!cacheKey || response.status >= 400) return;
+
+    responseCache.set(cacheKey, {
+      expiresAt: Date.now() + cfg.responseCacheTtlMs,
+      response: { ...response, headers: { ...response.headers, 'x-cache': 'MISS' } },
+    });
+  };
+
   return {
     getErrorMetrics(): Record<string, number> {
       return Object.fromEntries(errorMetrics.entries());
     },
 
+    getPerformanceStats(): GatewayPerformanceStats {
+      const byRouteEntries = [...requestLatencies.entries()]
+        .filter(([key]) => key !== '__all__')
+        .map(([key, values]) => [key, summarizeLatency(values)] as const);
+
+      return {
+        global: summarizeLatency(requestLatencies.get('__all__') ?? []),
+        byRoute: Object.fromEntries(byRouteEntries),
+        cache: {
+          hits: cacheHits,
+          misses: cacheMisses,
+          entries: responseCache.size,
+        },
+      };
+    },
+
     async handle(req: RequestContext): Promise<GatewayResponse> {
+      const startedAt = Date.now();
+      const routeKey = `${req.method} ${req.path}`;
       const origin = req.headers.origin;
       const corsOrigin = cfg.corsOrigins.includes('*')
         ? '*'
@@ -304,8 +413,19 @@ export function createGateway(
         return makeErrorResponse(401, req, baseHeaders, 'Unauthorized', 'Invalid token', 'TOKEN_INVALID');
       }
 
+      const cacheKey = buildCacheKey(req);
+      if (cacheKey) {
+        const cached = getCachedResponse(cacheKey);
+        if (cached) {
+          trackLatency(routeKey, Date.now() - startedAt);
+          return { ...cached, headers: { ...baseHeaders, ...cached.headers } };
+        }
+      }
+
       const local = await handleLocalEndpoint(req, baseHeaders);
       if (local) {
+        maybeSetCachedResponse(cacheKey, local);
+        trackLatency(routeKey, Date.now() - startedAt);
         return local;
       }
 
@@ -317,7 +437,10 @@ export function createGateway(
       const [prefix, target] = route;
       const downstreamPath = req.path.slice(prefix.length) || '/';
       const proxied = await proxyToService(target, { ...req, path: downstreamPath });
-      return { ...proxied, headers: { ...baseHeaders, ...proxied.headers } };
+      const merged = { ...proxied, headers: { ...baseHeaders, ...proxied.headers } };
+      maybeSetCachedResponse(cacheKey, merged);
+      trackLatency(routeKey, Date.now() - startedAt);
+      return merged;
     },
   };
 }

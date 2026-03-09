@@ -844,8 +844,8 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
   - Verify authentication and authorization
   - Ask the user if questions arise
 
-- [ ] 30. Property test generators and arbitraries
-  - [ ] 30.1 Create custom generators for domain types
+- [x] 30. Property test generators and arbitraries
+  - [x] 30.1 Create custom generators for domain types
     - ISO 6346 container ID generator
     - UN/LOCODE location generator
     - Vessel generator with valid IMO numbers
@@ -853,13 +853,13 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Bid generator with valid amounts
     - _Requirements: 17.1, 17.2_
 
-  - [ ] 30.2 Create generators for complex scenarios
+  - [x] 30.2 Create generators for complex scenarios
     - Auction with multiple bids generator
     - Container journey with multiple transport modes generator
     - Vessel with arrival prediction generator
     - _Requirements: All property tests_
 
-  - [ ] 30.3 Write unit tests for generators
+  - [x] 30.3 Write unit tests for generators
     - Test ISO 6346 generator produces valid IDs
     - Test UN/LOCODE generator produces valid codes
     - Test position generator produces valid coordinates
@@ -886,14 +886,14 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test container at port → demurrage time low → flagged priority → prioritized in auction
     - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 32. Performance testing and optimization
-  - [ ] 32.1 Set up performance testing with k6
+- [x] 32. Performance testing and optimization
+  - [x] 32.1 Set up performance testing with k6
     - Create load test scenarios
     - Create stress test scenarios
     - Create spike test scenarios
     - _Requirements: All_
 
-  - [ ] 32.2 Run performance tests and optimize
+  - [x] 32.2 Run performance tests and optimize
     - Test API response times (target: p95 < 500ms)
     - Test throughput (target: 10,000 req/s)
     - Test ULIP event publishing latency (target: < 30s)
