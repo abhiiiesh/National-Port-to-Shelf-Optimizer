@@ -80,37 +80,4 @@ describe('ULIPIntegrationService edge cases (Task 17.12)', () => {
       service.publishEvent({ eventId: 'evt2', eventType: 'x', timestamp: new Date(), source: 'svc', data: {}, metadata: {} })
     ).rejects.toThrow('Circuit breaker is open');
   });
-
-
-  test('berthing notification with missing data is rejected', () => {
-    const service = new ULIPIntegrationService(
-      { clientId: 'a', clientSecret: 'b', tokenEndpoint: 'https://ulip/token', defaultScope: ['x'] },
-      { post: async () => ({ accessToken: 'tok', tokenType: 'Bearer', expiresIn: 3600, scope: ['x'] }) }
-    );
-
-    expect(() => service.processBerthingNotification({
-      eventId: 'b1', eventType: 'berthing.notified', timestamp: new Date(), source: 'ulip', data: {}, metadata: {}
-    })).toThrow('missing required data');
-  });
-
-  test('gate event for unknown container is rejected', () => {
-    const service = new ULIPIntegrationService(
-      { clientId: 'a', clientSecret: 'b', tokenEndpoint: 'https://ulip/token', defaultScope: ['x'] },
-      { post: async () => ({ accessToken: 'tok', tokenType: 'Bearer', expiresIn: 3600, scope: ['x'] }) }
-    );
-
-    expect(() => service.processGateEvent({
-      eventId: 'g-unknown', eventType: 'gate.out', timestamp: new Date(), source: 'ulip', data: {}, metadata: { containerId: 'MISSING' }
-    })).toThrow('Unknown container');
-  });
-
-  test('port data query timeout/error bubbles up', async () => {
-    const service = new ULIPIntegrationService(
-      { clientId: 'a', clientSecret: 'b', tokenEndpoint: 'https://ulip/token', defaultScope: ['x'] },
-      { post: async () => { throw new Error('timeout'); } }
-    );
-
-    await expect(service.queryPortData('INMUM')).rejects.toThrow('timeout');
-  });
-
 });

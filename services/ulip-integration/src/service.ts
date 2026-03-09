@@ -1,4 +1,4 @@
-import { DomainEvent, PortData, ULIPEvent, ULIPToken } from '@port-to-shelf/shared-types';
+import { DomainEvent, ULIPEvent, ULIPToken } from '@port-to-shelf/shared-types';
 
 export interface AuthConfig {
   clientId: string;
@@ -58,8 +58,6 @@ export class ULIPIntegrationService {
   private tokenIssuedAt?: number;
   private readonly circuitBreaker: CircuitBreaker;
   private lastEventById = new Map<string, ULIPEvent>();
-  private readonly knownContainers = new Set<string>();
-  private readonly latestBerthingByVessel = new Map<string, ULIPEvent>();
 
   constructor(
     private readonly auth: AuthConfig,
@@ -98,81 +96,6 @@ export class ULIPIntegrationService {
 
   isHealthy(): boolean {
     return !this.circuitBreaker.isOpen() && Boolean(this.token);
-  }
-
-  async queryPortData(portId: string): Promise<PortData> {
-    const majorPorts = new Set(['INNSA', 'INMUM', 'INCCU', 'INVTZ']);
-    if (!majorPorts.has(portId)) {
-      throw new Error(`Unsupported port for ULIP query: ${portId}`);
-    }
-
-    await this.authenticate();
-    const response = await this.http.post<Partial<PortData>>(
-      'https://ulip.example/ports/query',
-      { portId },
-      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
-    );
-
-    return {
-      portId,
-      name: response.name ?? `Port-${portId}`,
-      congestionLevel: response.congestionLevel ?? 0.35,
-      availableBerths: response.availableBerths ?? 4,
-      averageWaitTime: response.averageWaitTime ?? 6,
-      gateOperatingHours: response.gateOperatingHours ?? {
-        open: '06:00',
-        close: '22:00',
-        timezone: 'Asia/Kolkata',
-      },
-    };
-  }
-
-  processBerthingNotification(event: ULIPEvent): ULIPEvent {
-    this.validateEvent(event);
-    if (!event.metadata.vesselId || !event.metadata.location) {
-      throw new Error('Berthing notification missing required data');
-    }
-
-    const existing = this.latestBerthingByVessel.get(event.metadata.vesselId);
-    if (!existing || event.timestamp.getTime() >= existing.timestamp.getTime()) {
-      this.latestBerthingByVessel.set(event.metadata.vesselId, event);
-    }
-
-    return this.latestBerthingByVessel.get(event.metadata.vesselId)!;
-  }
-
-  processGateEvent(event: ULIPEvent): ULIPEvent {
-    this.validateEvent(event);
-    const containerId = event.metadata.containerId;
-    if (!containerId) {
-      throw new Error('Gate event missing container id');
-    }
-
-    if (event.eventType === 'gate.in') {
-      this.knownContainers.add(containerId);
-      return event;
-    }
-
-    if (event.eventType === 'gate.out') {
-      if (!this.knownContainers.has(containerId)) {
-        throw new Error(`Unknown container for gate event: ${containerId}`);
-      }
-      return event;
-    }
-
-    throw new Error(`Unsupported gate event type: ${event.eventType}`);
-  }
-
-  async publishContainerPickupRequest(containerId: string, portId: string): Promise<void> {
-    const event: ULIPEvent = {
-      eventId: `pickup-${containerId}-${Date.now()}`,
-      eventType: 'container.pickup.requested',
-      timestamp: new Date(),
-      source: 'ulip-integration',
-      data: { containerId, portId },
-      metadata: { containerId, location: portId },
-    };
-    await this.publishEvent(event);
   }
 
   async publishEvent(event: ULIPEvent): Promise<void> {
