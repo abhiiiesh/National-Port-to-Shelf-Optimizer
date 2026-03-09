@@ -26,6 +26,19 @@ export class AuthorizationService {
    * Check if user is authorized to perform action on resource
    */
   authorize(context: AuthorizationContext, resource: string, action: string): boolean {
+    const isKnownResource = Array.from(this.permissions.values()).some(
+      (permission) => permission.resource === resource
+    );
+
+    // System administrators have access to all known resources except for retailer-only bidding.
+    if (
+      context.roles.includes(Role.SYSTEM_ADMINISTRATOR) &&
+      isKnownResource &&
+      !(resource === 'auction' && action === 'bid')
+    ) {
+      return true;
+    }
+
     const key = this.getPermissionKey(resource, action);
     const permission = this.permissions.get(key);
 
