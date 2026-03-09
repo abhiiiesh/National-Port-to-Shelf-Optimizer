@@ -7,7 +7,14 @@
     "jsx": "react-jsx",
     "strict": true,
     "noEmit": true,
-    "baseUrl": "./src"
+    "baseUrl": "./src",
+    "paths": {
+      "@app/*": ["app/*"],
+      "@features/*": ["features/*"],
+      "@shared/*": ["shared/*"],
+      "@config/*": ["config/*"],
+      "@port-to-shelf/shared-types": ["../../../packages/shared-types/src/index.ts"]
+    }
   },
   "include": ["src/**/*"]
 }

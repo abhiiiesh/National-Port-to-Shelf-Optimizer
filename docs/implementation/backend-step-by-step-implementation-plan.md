@@ -38,6 +38,15 @@ This closes the first execution step (Current Frontend Baseline) and prepares Ph
 
 ## 1) Foundation Hardening (UI Build, Types, Contracts)
 
+### 1.0 Implementation status (completed)
+
+Implemented baseline hardening assets:
+
+- Strict frontend workspace checks (`lint`, `typecheck`, boundary guard, compile build)
+- Frontend layer path aliases and module-boundary validation script
+- Typed API contract models + runtime contract guards for critical payloads
+- Contract validation tests and root script to run frontend foundation checkpoint
+
 ### 1.1 Frontend project consistency
 1. Ensure strict TypeScript settings and linting across UI workspaces.
 2. Align path aliases/import boundaries with built artifacts and shared packages.
