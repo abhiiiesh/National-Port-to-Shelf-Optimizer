@@ -713,8 +713,8 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test timestamp timezone conversion
     - _Requirements: 17.1, 17.2, 17.3_
 
-- [ ] 24. ULIP Analytics and Reporting Integration
-  - [ ] 24.1 Implement analytics integration methods
+- [x] 24. ULIP Analytics and Reporting Integration
+  - [x] 24.1 Implement analytics integration methods
     - Publish performance metrics to ULIP analytics module
     - Access ULIP national logistics dashboard data
     - Include ULIP data in generated reports
@@ -722,23 +722,23 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Contribute anonymized operational data
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5_
 
-  - [ ] 24.2 Write property test for performance metrics publishing
+  - [x] 24.2 Write property test for performance metrics publishing
     - **Property 79: Performance Metrics Publishing to ULIP**
     - **Validates: Requirements 18.1**
 
-  - [ ] 24.3 Write property test for ULIP dashboard data access
+  - [x] 24.3 Write property test for ULIP dashboard data access
     - **Property 80: ULIP Dashboard Data Access**
     - **Validates: Requirements 18.2**
 
-  - [ ] 24.4 Write property test for report ULIP data inclusion
+  - [x] 24.4 Write property test for report ULIP data inclusion
     - **Property 81: Report ULIP Data Inclusion**
     - **Validates: Requirements 18.3**
 
-  - [ ] 24.5 Write property test for anonymized data contribution
+  - [x] 24.5 Write property test for anonymized data contribution
     - **Property 82: Anonymized Data Contribution to ULIP**
     - **Validates: Requirements 18.5**
 
-  - [ ] 24.6 Write unit tests for analytics integration edge cases
+  - [x] 24.6 Write unit tests for analytics integration edge cases
     - Test metrics publishing with missing data
     - Test dashboard data access timeout
     - Test anonymization of sensitive data
