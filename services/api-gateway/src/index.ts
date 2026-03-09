@@ -504,6 +504,72 @@ export function createGateway(
     return undefined;
   };
 
+
+
+  const trackLatency = (routeKey: string, elapsedMs: number): void => {
+    const all = requestLatencies.get('__all__') ?? [];
+    all.push(elapsedMs);
+    if (all.length > cfg.maxTrackedLatencySamples) all.shift();
+    requestLatencies.set('__all__', all);
+
+    const route = requestLatencies.get(routeKey) ?? [];
+    route.push(elapsedMs);
+    if (route.length > cfg.maxTrackedLatencySamples) route.shift();
+    requestLatencies.set(routeKey, route);
+  };
+
+  const summarizeLatency = (samples: number[]): RequestLatencyStats => {
+    if (samples.length === 0) {
+      return { requestCount: 0, averageMs: 0, p95Ms: 0 };
+    }
+
+    const sorted = [...samples].sort((a, b) => a - b);
+    const p95Index = Math.max(0, Math.ceil(sorted.length * 0.95) - 1);
+    const averageMs = sorted.reduce((sum, value) => sum + value, 0) / sorted.length;
+
+    return {
+      requestCount: sorted.length,
+      averageMs: Number(averageMs.toFixed(2)),
+      p95Ms: Number(sorted[p95Index].toFixed(2)),
+    };
+  };
+
+  const buildCacheKey = (req: RequestContext): string | undefined => {
+    if (req.method !== 'GET') return undefined;
+    const cacheablePaths = ['/api/v1/metrics/performance', '/api/v1/reports'];
+    const isCacheable = cacheablePaths.includes(req.path);
+    if (!isCacheable) return undefined;
+
+    const query = req.query ? JSON.stringify(Object.entries(req.query).sort(([a], [b]) => a.localeCompare(b))) : '';
+    return `${req.method}:${req.path}:${query}`;
+  };
+
+  const getCachedResponse = (cacheKey: string): GatewayResponse | undefined => {
+    const entry = responseCache.get(cacheKey);
+    if (!entry) {
+      cacheMisses += 1;
+      return undefined;
+    }
+
+    if (Date.now() > entry.expiresAt) {
+      responseCache.delete(cacheKey);
+      cacheMisses += 1;
+      return undefined;
+    }
+
+    cacheHits += 1;
+    return { ...entry.response, headers: { ...entry.response.headers, 'x-cache': 'HIT' } };
+  };
+
+  const maybeSetCachedResponse = (cacheKey: string | undefined, response: GatewayResponse): void => {
+    if (!cacheKey || response.status >= 400) return;
+
+    responseCache.set(cacheKey, {
+      expiresAt: Date.now() + cfg.responseCacheTtlMs,
+      response: { ...response, headers: { ...response.headers, 'x-cache': 'MISS' } },
+    });
+  };
+
   return {
     getErrorMetrics(): Record<string, number> {
       return Object.fromEntries(errorMetrics.entries());
