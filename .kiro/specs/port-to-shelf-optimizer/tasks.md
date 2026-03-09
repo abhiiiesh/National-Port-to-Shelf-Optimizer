@@ -236,48 +236,48 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
   - Ask the user if questions arise
 
 
-- [ ] 11. AI Prediction Service
-  - [ ] 11.1 Implement prediction data models
+- [x] 11. AI Prediction Service
+  - [x] 11.1 Implement prediction data models
     - Create ArrivalPrediction, PredictionFactors, WeatherData, AccuracyMetrics interfaces
     - Create prediction repository for storing predictions
     - _Requirements: 3.1, 3.5_
 
-  - [ ] 11.2 Implement basic prediction algorithm
+  - [x] 11.2 Implement basic prediction algorithm
     - Calculate ETA based on current speed and distance
     - Incorporate weather conditions (wind speed, wave height)
     - Calculate confidence intervals
     - _Requirements: 3.1, 3.2_
 
-  - [ ] 11.3 Implement prediction service methods
+  - [x] 11.3 Implement prediction service methods
     - Implement predictArrival() method
     - Implement updatePrediction() method
     - Implement evaluatePredictionAccuracy() method
     - Store predictions in time series database
     - _Requirements: 3.1, 3.2, 3.4, 3.5_
 
-  - [ ] 11.4 Integrate prediction service with event bus
+  - [x] 11.4 Integrate prediction service with event bus
     - Subscribe to vessel.position.updated events
     - Publish prediction.generated events
     - Publish prediction.updated events
     - _Requirements: 3.1, 3.2_
 
-  - [ ] 11.5 Write property test for prediction generation
+  - [x] 11.5 Write property test for prediction generation
     - **Property 11: Prediction Generation for En-Route Vessels**
     - **Validates: Requirements 3.1**
 
-  - [ ] 11.6 Write property test for prediction update
+  - [x] 11.6 Write property test for prediction update
     - **Property 12: Prediction Update on New Data**
     - **Validates: Requirements 3.2**
 
-  - [ ] 11.7 Write property test for low confidence flagging
+  - [x] 11.7 Write property test for low confidence flagging
     - **Property 13: Low Confidence Flagging**
     - **Validates: Requirements 3.4**
 
-  - [ ] 11.8 Write property test for accuracy metrics storage
+  - [x] 11.8 Write property test for accuracy metrics storage
     - **Property 14: Prediction Accuracy Metrics Storage**
     - **Validates: Requirements 3.5**
 
-  - [ ] 11.9 Write unit tests for prediction edge cases
+  - [x] 11.9 Write unit tests for prediction edge cases
     - Test prediction with missing weather data
     - Test prediction for vessel at port
     - Test prediction accuracy evaluation
