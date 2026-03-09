@@ -684,15 +684,6 @@ export function createGateway(
         }
       }
 
-      const cacheKey = buildCacheKey(req);
-      if (cacheKey) {
-        const cached = getCachedResponse(cacheKey);
-        if (cached) {
-          trackLatency(routeKey, Date.now() - startedAt);
-          return { ...cached, headers: { ...baseHeaders, ...cached.headers } };
-        }
-      }
-
       const local = await handleLocalEndpoint(req, baseHeaders);
       if (local) {
         maybeSetCachedResponse(cacheKey, local);

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-config
+  namespace: port-to-shelf
+data:
+  NODE_ENV: production
+  AUTH_SERVICE_URL: http://authentication:3005
+  KAFKA_BROKERS: kafka:9092
+  REDIS_URL: redis://redis:6379
+  DATABASE_URL: postgres://postgres:postgres@postgres:5432/port_to_shelf
