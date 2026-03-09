@@ -185,6 +185,15 @@ Implemented frontend security/governance baseline assets:
 
 ## 6) Testing Strategy (Execution Order)
 
+### 6.0 Implementation status (completed)
+
+Implemented frontend testing-strategy baseline assets:
+
+- Contract-driven integration tests for typed API client behavior
+- Resilience tests for retry policy defaults and request-cancellation semantics
+- Non-functional performance budget evaluator with pass/fail validation tests
+- Expanded frontend test pipeline chaining unit, integration, and resilience checks
+
 ### 6.1 Unit and component tests
 1. Cover domain logic helpers, mappers, and critical UI state transitions.
 2. Add component tests for forms, validation, and error rendering.
