@@ -887,7 +887,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - _Requirements: 6.1, 6.2, 6.3_
 
 - [ ] 32. Performance testing and optimization
-  - [ ] 32.1 Set up performance testing with k6
+  - [x] 32.1 Set up performance testing with k6
     - Create load test scenarios
     - Create stress test scenarios
     - Create spike test scenarios
