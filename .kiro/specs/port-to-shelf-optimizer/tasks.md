@@ -804,8 +804,8 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test idempotency with duplicate requests
     - _Requirements: 11.4, 11.5_
 
-- [ ] 28. API endpoints and REST controllers
-  - [ ] 28.1 Implement vessel tracking endpoints
+- [x] 28. API endpoints and REST controllers
+  - [x] 28.1 Implement vessel tracking endpoints
     - POST /vessels - Register vessel
     - PUT /vessels/:id/position - Update position
     - GET /vessels/:id - Get vessel details
@@ -813,7 +813,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - POST /vessels/:id/arrival - Record arrival
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-  - [ ] 28.2 Implement container tracking endpoints
+  - [x] 28.2 Implement container tracking endpoints
     - POST /containers - Create container
     - PUT /containers/:id/transport-mode - Update transport mode
     - GET /containers/:id/journey - Get container journey
@@ -821,18 +821,18 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - POST /containers/:id/delivered - Mark delivered
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-  - [ ] 28.3 Implement auction endpoints
+  - [x] 28.3 Implement auction endpoints
     - GET /auctions - List active auctions
     - GET /auctions/:id - Get auction details
     - POST /auctions/:id/bids - Submit bid
     - _Requirements: 5.1, 5.2_
 
-  - [ ] 28.4 Implement metrics endpoints
+  - [x] 28.4 Implement metrics endpoints
     - GET /metrics/performance - Get performance metrics
     - GET /reports - Generate reports
     - _Requirements: 8.3_
 
-  - [ ] 28.5 Write integration tests for API endpoints
+  - [x] 28.5 Write integration tests for API endpoints
     - Test vessel tracking flow
     - Test container tracking flow
     - Test auction bidding flow
