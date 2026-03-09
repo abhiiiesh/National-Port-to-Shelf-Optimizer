@@ -9,6 +9,7 @@
     "check:boundaries": "node ../../scripts/frontend/check-frontend-boundaries.js",
     "check:contracts": "jest -c ../../jest.config.js --runInBand src/__tests__/contracts.test.ts",
     "build": "npm run lint && npm run typecheck && npm run check:boundaries && tsc -p tsconfig.build.json",
-    "test": "npm run check:contracts"
+    "test": "npm run check:contracts && npm run check:app-shell",
+    "check:app-shell": "jest -c ../../jest.config.js --runInBand src/__tests__/app-shell.test.ts"
   }
 }

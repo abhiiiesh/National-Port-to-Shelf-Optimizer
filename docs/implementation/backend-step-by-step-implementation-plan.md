@@ -67,6 +67,16 @@ Implemented baseline hardening assets:
 
 ## 2) Application Shell and Navigation Maturity
 
+### 2.0 Implementation status (completed)
+
+Implemented shell/navigation maturity baseline assets:
+
+- Route map by domain with lazy module references
+- Role-based route resolution with unauthorized and not-found fallbacks
+- Standardized loading/empty/ready/error state helpers for feature pages
+- Query policy defaults and request cancellation registry for rapid navigation
+- Dedicated tests validating route guards, fallback behavior, and cancellation behavior
+
 ### 2.1 Route architecture
 1. Define route map by domain: tracking, sloting, auction, analytics, administration.
 2. Implement route-level code splitting and lazy loading.
