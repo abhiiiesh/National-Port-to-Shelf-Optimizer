@@ -96,6 +96,16 @@ Implemented shell/navigation maturity baseline assets:
 
 ## 3) Design System and Accessibility Reinforcement
 
+### 3.0 Implementation status (completed)
+
+Implemented design/a11y reinforcement baseline assets:
+
+- Shared design tokens for color, spacing, typography, and radii
+- Primitive style builders for button and status badge components
+- Accessibility validators for aria labels, visible labels, and color-contrast checks
+- Locale-aware formatting helpers for date/time and currency handling
+- Dedicated tests validating token consistency, style primitives, a11y rules, and localization helpers
+
 ### 3.1 Component system
 1. Build/align a shared component library for forms, tables, cards, charts, and status badges.
 2. Enforce consistent spacing, typography, color tokens, and interaction states.
