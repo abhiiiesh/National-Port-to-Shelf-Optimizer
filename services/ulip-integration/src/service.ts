@@ -1,4 +1,40 @@
-import { DomainEvent, ULIPEvent, ULIPToken } from '@port-to-shelf/shared-types';
+import { CustomsClearanceStatus, CustomsStatus, Document, DomainEvent, PortData, RailBookingRequest, RailCapacity, TruckAvailability, TruckBookingRequest, ULIPEvent, ULIPToken } from '@port-to-shelf/shared-types';
+
+export interface RailRouteOption {
+  origin: string;
+  destination: string;
+  transitTime: number;
+  distanceKm: number;
+}
+
+export interface RailBookingConfirmation {
+  bookingId: string;
+  containerId: string;
+  route: { origin: string; destination: string };
+  scheduledDeparture: Date;
+  estimatedArrival: Date;
+  cost: number;
+  status: 'CONFIRMED';
+}
+
+export interface RoadBookingConfirmation {
+  bookingId: string;
+  containerId: string;
+  pickupLocation: string;
+  deliveryLocation: string;
+  pickupDate: Date;
+  fleetProviderId: string;
+  estimatedArrival: Date;
+  cost: number;
+  status: 'CONFIRMED';
+}
+
+export interface FastagTollEvent {
+  tollPlazaId: string;
+  location: string;
+  timestamp: Date;
+  amount: number;
+}
 
 export interface AuthConfig {
   clientId: string;
@@ -58,6 +94,17 @@ export class ULIPIntegrationService {
   private tokenIssuedAt?: number;
   private readonly circuitBreaker: CircuitBreaker;
   private lastEventById = new Map<string, ULIPEvent>();
+  private readonly knownContainers = new Set<string>();
+  private readonly latestBerthingByVessel = new Map<string, ULIPEvent>();
+  private readonly latestRailTrackingByContainer = new Map<string, ULIPEvent>();
+  private readonly latestRailDelayByContainer = new Map<string, ULIPEvent>();
+  private readonly latestTruckLocationByTruck = new Map<string, ULIPEvent>();
+  private readonly latestDeliveryByContainer = new Map<string, ULIPEvent>();
+  private readonly knownTruckIds = new Set<string>();
+  private readonly latestCustomsStatusByContainer = new Map<string, CustomsStatus>();
+  private readonly latestRegulatoryHoldByContainer = new Map<string, ULIPEvent>();
+  private readonly publishedEventIds = new Set<string>();
+  private readonly failedRequestQueue: Array<{ endpoint: string; payload: unknown }> = [];
 
   constructor(
     private readonly auth: AuthConfig,
@@ -98,8 +145,567 @@ export class ULIPIntegrationService {
     return !this.circuitBreaker.isOpen() && Boolean(this.token);
   }
 
+  async queryPortData(portId: string): Promise<PortData> {
+    const majorPorts = new Set(['INNSA', 'INMUM', 'INCCU', 'INVTZ']);
+    if (!majorPorts.has(portId)) {
+      throw new Error(`Unsupported port for ULIP query: ${portId}`);
+    }
+
+    await this.authenticate();
+    const response = await this.http.post<Partial<PortData>>(
+      'https://ulip.example/ports/query',
+      { portId },
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+
+    return {
+      portId,
+      name: response.name ?? `Port-${portId}`,
+      congestionLevel: response.congestionLevel ?? 0.35,
+      availableBerths: response.availableBerths ?? 4,
+      averageWaitTime: response.averageWaitTime ?? 6,
+      gateOperatingHours: response.gateOperatingHours ?? {
+        open: '06:00',
+        close: '22:00',
+        timezone: 'Asia/Kolkata',
+      },
+    };
+  }
+
+  processBerthingNotification(event: ULIPEvent): ULIPEvent {
+    this.validateEvent(event);
+    if (!event.metadata.vesselId || !event.metadata.location) {
+      throw new Error('Berthing notification missing required data');
+    }
+
+    const existing = this.latestBerthingByVessel.get(event.metadata.vesselId);
+    if (!existing || event.timestamp.getTime() >= existing.timestamp.getTime()) {
+      this.latestBerthingByVessel.set(event.metadata.vesselId, event);
+    }
+
+    return this.latestBerthingByVessel.get(event.metadata.vesselId)!;
+  }
+
+  processGateEvent(event: ULIPEvent): ULIPEvent {
+    this.validateEvent(event);
+    const containerId = event.metadata.containerId;
+    if (!containerId) {
+      throw new Error('Gate event missing container id');
+    }
+
+    if (event.eventType === 'gate.in') {
+      this.knownContainers.add(containerId);
+      return event;
+    }
+
+    if (event.eventType === 'gate.out') {
+      if (!this.knownContainers.has(containerId)) {
+        throw new Error(`Unknown container for gate event: ${containerId}`);
+      }
+      return event;
+    }
+
+    throw new Error(`Unsupported gate event type: ${event.eventType}`);
+  }
+
+  async publishContainerPickupRequest(containerId: string, portId: string): Promise<void> {
+    const event: ULIPEvent = {
+      eventId: `pickup-${containerId}-${Date.now()}`,
+      eventType: 'container.pickup.requested',
+      timestamp: new Date(),
+      source: 'ulip-integration',
+      data: { containerId, portId },
+      metadata: { containerId, location: portId },
+    };
+    await this.publishEvent(event);
+  }
+
+  async queryRailCapacity(route: { origin: string; destination: string }, date: Date): Promise<RailCapacity> {
+    await this.authenticate();
+
+    const response = await this.http.post<Partial<RailCapacity>>(
+      'https://ulip.example/rail/capacity',
+      { route, date: date.toISOString() },
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+
+    const availableWagons = response.availableWagons ?? 40;
+    const capacity = response.capacity ?? Math.max(availableWagons, 1) * 2;
+
+    return {
+      route,
+      date,
+      availableWagons,
+      capacity,
+      transitTime: response.transitTime ?? 24,
+      cost: response.cost ?? capacity * 1500,
+    };
+  }
+
+  async createRailBooking(booking: RailBookingRequest): Promise<RailBookingConfirmation> {
+    if (booking.capacity <= 0) {
+      throw new Error('Rail booking capacity must be greater than zero');
+    }
+
+    const availability = await this.queryRailCapacity(booking.route, booking.departureDate);
+    if (availability.capacity < booking.capacity || availability.availableWagons <= 0) {
+      throw new Error('No available rail capacity for booking');
+    }
+
+    await this.authenticate();
+    const response = await this.http.post<Partial<RailBookingConfirmation>>(
+      'https://ulip.example/rail/bookings',
+      {
+        containerId: booking.containerId,
+        route: booking.route,
+        departureDate: booking.departureDate.toISOString(),
+        capacity: booking.capacity,
+      },
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+
+    const transitHours = availability.transitTime;
+    return {
+      bookingId: response.bookingId ?? `rail-${booking.containerId}-${booking.departureDate.getTime()}`,
+      containerId: booking.containerId,
+      route: booking.route,
+      scheduledDeparture: booking.departureDate,
+      estimatedArrival: new Date(booking.departureDate.getTime() + transitHours * 60 * 60 * 1000),
+      cost: response.cost ?? availability.cost,
+      status: 'CONFIRMED',
+    };
+  }
+
+  processRailTrackingUpdate(event: ULIPEvent): ULIPEvent {
+    this.validateEvent(event);
+    const containerId = event.metadata.containerId;
+    if (!containerId) {
+      throw new Error('Rail tracking update missing container id');
+    }
+
+    const existing = this.latestRailTrackingByContainer.get(containerId);
+    if (!existing || event.timestamp.getTime() >= existing.timestamp.getTime()) {
+      this.latestRailTrackingByContainer.set(containerId, event);
+    }
+
+    return this.latestRailTrackingByContainer.get(containerId)!;
+  }
+
+  processRailDelayNotification(event: ULIPEvent): ULIPEvent {
+    this.validateEvent(event);
+    const containerId = event.metadata.containerId;
+    if (!containerId) {
+      throw new Error('Rail delay notification missing container id');
+    }
+
+    const delayHours = event.data.delayHours;
+    if (typeof delayHours !== 'number' || delayHours < 0) {
+      throw new Error('Rail delay notification missing valid delayHours');
+    }
+
+    const existing = this.latestRailDelayByContainer.get(containerId);
+    if (!existing || event.timestamp.getTime() >= existing.timestamp.getTime()) {
+      this.latestRailDelayByContainer.set(containerId, event);
+    }
+
+    return this.latestRailDelayByContainer.get(containerId)!;
+  }
+
+  async queryRailRoutes(origin: string, destination: string): Promise<RailRouteOption[]> {
+    await this.authenticate();
+    const response = await this.http.post<{ routes?: RailRouteOption[] }>(
+      'https://ulip.example/rail/routes',
+      { origin, destination },
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+
+    if (response.routes && response.routes.length > 0) {
+      return response.routes.filter((route) => route.transitTime > 0);
+    }
+
+    return [
+      {
+        origin,
+        destination,
+        transitTime: 30,
+        distanceKm: 1200,
+      },
+    ];
+  }
+
+
+  async queryTruckAvailability(location: string, date: Date): Promise<TruckAvailability> {
+    await this.authenticate();
+    const response = await this.http.post<Partial<TruckAvailability>>(
+      'https://ulip.example/road/availability',
+      { location, date: date.toISOString() },
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+
+    return {
+      location,
+      date,
+      availableTrucks: response.availableTrucks ?? 8,
+      fleetProviders: response.fleetProviders ?? [
+        { id: 'FLEET-1', name: 'Default Fleet', availableCapacity: 20, ratePerKm: 55 },
+      ],
+    };
+  }
+
+  async createTruckBooking(booking: TruckBookingRequest): Promise<RoadBookingConfirmation> {
+    const availability = await this.queryTruckAvailability(booking.pickupLocation, booking.pickupDate);
+    if (availability.availableTrucks <= 0) {
+      throw new Error('No available trucks for booking');
+    }
+
+    const provider = availability.fleetProviders.find((fleet) => fleet.id === booking.fleetProviderId);
+    if (!provider) {
+      throw new Error('Unknown fleet provider for booking');
+    }
+
+    await this.authenticate();
+    const response = await this.http.post<Partial<RoadBookingConfirmation> & { truckId?: string }>(
+      'https://ulip.example/road/bookings',
+      {
+        containerId: booking.containerId,
+        pickupLocation: booking.pickupLocation,
+        deliveryLocation: booking.deliveryLocation,
+        pickupDate: booking.pickupDate.toISOString(),
+        fleetProviderId: booking.fleetProviderId,
+      },
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+
+    const truckId = response.truckId ?? `TRUCK-${booking.containerId}`;
+    this.knownTruckIds.add(truckId);
+
+    return {
+      bookingId: response.bookingId ?? `road-${booking.containerId}-${booking.pickupDate.getTime()}`,
+      containerId: booking.containerId,
+      pickupLocation: booking.pickupLocation,
+      deliveryLocation: booking.deliveryLocation,
+      pickupDate: booking.pickupDate,
+      fleetProviderId: booking.fleetProviderId,
+      estimatedArrival: response.estimatedArrival ?? new Date(booking.pickupDate.getTime() + 12 * 60 * 60 * 1000),
+      cost: response.cost ?? provider.ratePerKm * 100,
+      status: 'CONFIRMED',
+    };
+  }
+
+  processTruckLocationUpdate(event: ULIPEvent): ULIPEvent {
+    this.validateEvent(event);
+    const truckId = event.data.truckId;
+    if (typeof truckId !== 'string' || !truckId) {
+      throw new Error('GPS location update missing truck id');
+    }
+
+    if (!this.knownTruckIds.has(truckId)) {
+      throw new Error(`Unknown truck for GPS update: ${truckId}`);
+    }
+
+    const existing = this.latestTruckLocationByTruck.get(truckId);
+    if (!existing || event.timestamp.getTime() >= existing.timestamp.getTime()) {
+      this.latestTruckLocationByTruck.set(truckId, event);
+    }
+
+    return this.latestTruckLocationByTruck.get(truckId)!;
+  }
+
+  async getFASTagTollData(truckId: string, from: Date, to: Date): Promise<FastagTollEvent[]> {
+    await this.authenticate();
+    const response = await this.http.post<{ tollEvents?: FastagTollEvent[] }>(
+      'https://ulip.example/road/fastag',
+      { truckId, from: from.toISOString(), to: to.toISOString() },
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+
+    if (response.tollEvents && response.tollEvents.length > 0) {
+      return response.tollEvents;
+    }
+
+    return [
+      { tollPlazaId: 'TOLL-1', location: 'NH48', timestamp: from, amount: 275 },
+    ];
+  }
+
+  processDeliveryConfirmation(event: ULIPEvent): ULIPEvent {
+    this.validateEvent(event);
+    const containerId = event.metadata.containerId;
+    if (!containerId) {
+      throw new Error('Delivery confirmation missing container id');
+    }
+
+    const delivered = event.data.delivered;
+    if (delivered !== true) {
+      throw new Error('Delivery confirmation missing delivered flag');
+    }
+
+    const existing = this.latestDeliveryByContainer.get(containerId);
+    if (!existing || event.timestamp.getTime() >= existing.timestamp.getTime()) {
+      this.latestDeliveryByContainer.set(containerId, event);
+    }
+
+    return this.latestDeliveryByContainer.get(containerId)!;
+  }
+
+
+  async getCustomsStatus(containerId: string): Promise<CustomsStatus> {
+    await this.authenticate();
+    const response = await this.http.post<Partial<CustomsStatus>>(
+      'https://ulip.example/customs/status',
+      { containerId },
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+
+    const status: CustomsStatus = {
+      containerId,
+      status: response.status ?? CustomsClearanceStatus.PENDING,
+      clearanceDate: response.clearanceDate,
+      holds: response.holds ?? [],
+      documentsRequired: response.documentsRequired ?? [],
+    };
+
+    this.latestCustomsStatusByContainer.set(containerId, status);
+    return status;
+  }
+
+  async submitCustomsDocuments(containerId: string, documents: Document[]): Promise<void> {
+    if (documents.length === 0) {
+      throw new Error('At least one customs document is required');
+    }
+
+    await this.authenticate();
+    await this.http.post(
+      'https://ulip.example/customs/documents',
+      {
+        containerId,
+        documents: documents.map((doc) => ({
+          type: doc.type,
+          content: doc.content,
+          format: doc.format,
+        })),
+      },
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+  }
+
+  processCustomsClearanceNotification(event: ULIPEvent): CustomsStatus {
+    this.validateEvent(event);
+    const containerId = event.metadata.containerId;
+    if (!containerId) {
+      throw new Error('Customs clearance notification missing container id');
+    }
+
+    const cleared = event.data.cleared;
+    if (cleared !== true) {
+      throw new Error('Customs clearance notification missing cleared flag');
+    }
+
+    const incoming: CustomsStatus = {
+      containerId,
+      status: CustomsClearanceStatus.CLEARED,
+      clearanceDate: event.timestamp,
+      holds: [],
+      documentsRequired: [],
+    };
+
+    const existing = this.latestCustomsStatusByContainer.get(containerId);
+    if (!existing || !existing.clearanceDate || event.timestamp.getTime() >= existing.clearanceDate.getTime()) {
+      this.latestCustomsStatusByContainer.set(containerId, incoming);
+    }
+
+    return this.latestCustomsStatusByContainer.get(containerId)!;
+  }
+
+  async getICEGATEData(containerId: string): Promise<Record<string, unknown>> {
+    await this.authenticate();
+    const response = await this.http.post<Record<string, unknown>>(
+      'https://ulip.example/customs/icegate',
+      { containerId },
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+
+    return {
+      containerId,
+      boeNumber: response.boeNumber ?? `BOE-${containerId}`,
+      filingStatus: response.filingStatus ?? 'FILED',
+      lastUpdated: response.lastUpdated ?? new Date().toISOString(),
+    };
+  }
+
+  processRegulatoryHoldAlert(event: ULIPEvent): ULIPEvent {
+    this.validateEvent(event);
+    const containerId = event.metadata.containerId;
+    if (!containerId) {
+      throw new Error('Regulatory hold alert missing container id');
+    }
+
+    const reason = event.data.reason;
+    if (typeof reason !== 'string' || reason.length === 0) {
+      throw new Error('Regulatory hold alert missing reason');
+    }
+
+    const existing = this.latestRegulatoryHoldByContainer.get(containerId);
+    if (!existing || event.timestamp.getTime() >= existing.timestamp.getTime()) {
+      this.latestRegulatoryHoldByContainer.set(containerId, event);
+      this.latestCustomsStatusByContainer.set(containerId, {
+        containerId,
+        status: CustomsClearanceStatus.HELD,
+        holds: [{ reason, appliedDate: event.timestamp, expectedResolution: new Date(event.timestamp.getTime() + 24 * 60 * 60 * 1000) }],
+        documentsRequired: [],
+      });
+    }
+
+    return this.latestRegulatoryHoldByContainer.get(containerId)!;
+  }
+
+
+  validateISO6346ContainerId(containerId: string): boolean {
+    return /^[A-Z]{4}\d{7}$/.test(containerId);
+  }
+
+  validateUNLocode(locationCode: string): boolean {
+    return /^[A-Z]{2}[A-Z0-9]{3}$/.test(locationCode);
+  }
+
+  formatTimestampIST(timestamp: Date): string {
+    const istOffsetMs = 5.5 * 60 * 60 * 1000;
+    const maxDateMs = 8.64e15;
+    const shiftedMs = timestamp.getTime() + istOffsetMs;
+    const boundedMs = Math.max(-maxDateMs, Math.min(maxDateMs, shiftedMs));
+    const istDate = new Date(boundedMs);
+    const iso = istDate.toISOString().replace('Z', '');
+    return `${iso}+05:30`;
+  }
+
+  validateULIPEventTaxonomy(eventType: string): boolean {
+    const pattern = /^[a-z]+(\.[a-z]+)+$/;
+    if (!pattern.test(eventType)) {
+      return false;
+    }
+
+    const [root] = eventType.split('.');
+    const supportedRoots = new Set([
+      'vessel', 'container', 'demurrage', 'auction', 'bid', 'slot', 'prediction',
+      'ulip', 'port', 'rail', 'road', 'truck', 'customs'
+    ]);
+    return supportedRoots.has(root);
+  }
+
+  validateULIPJSONSchemaRoundTrip(event: ULIPEvent): boolean {
+    try {
+      const serialized = JSON.stringify({
+        ...event,
+        timestamp: event.timestamp.toISOString(),
+      });
+
+      const parsed = JSON.parse(serialized) as {
+        eventId?: string;
+        eventType?: string;
+        timestamp?: string;
+        source?: string;
+        data?: unknown;
+        metadata?: unknown;
+      };
+
+      if (!parsed.eventId || !parsed.eventType || !parsed.timestamp || !parsed.source) {
+        return false;
+      }
+
+      if (!this.validateULIPEventTaxonomy(parsed.eventType)) {
+        return false;
+      }
+
+      if (typeof parsed.data !== 'object' || parsed.data === null) {
+        return false;
+      }
+
+      if (typeof parsed.metadata !== 'object' || parsed.metadata === null) {
+        return false;
+      }
+
+      const roundTrip = new Date(parsed.timestamp);
+      return !Number.isNaN(roundTrip.getTime()) && roundTrip.toISOString() === event.timestamp.toISOString();
+    } catch {
+      return false;
+    }
+  }
+
+
+  async publishPerformanceMetrics(metrics: {
+    transitTimeHours: number;
+    demurrageCost: number;
+    slotUtilization: number;
+    containerId?: string;
+  }): Promise<void> {
+    if (metrics.transitTimeHours < 0 || metrics.demurrageCost < 0 || metrics.slotUtilization < 0 || metrics.slotUtilization > 1) {
+      throw new Error('Invalid metrics payload');
+    }
+
+    await this.authenticate();
+    await this.http.post(
+      'https://ulip.example/analytics/metrics',
+      metrics,
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+  }
+
+  async getNationalLogisticsDashboardData(region = 'IN'): Promise<Record<string, unknown>> {
+    await this.authenticate();
+    return this.http.post<Record<string, unknown>>(
+      'https://ulip.example/analytics/dashboard',
+      { region },
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+  }
+
+  async includeULIPDataInReport(report: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const dashboard = await this.getNationalLogisticsDashboardData('IN');
+    return {
+      ...report,
+      ulipBenchmarkData: dashboard,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  async subscribeToPredictiveAnalyticsFeeds(
+    callback: (payload: Record<string, unknown>) => Promise<void>
+  ): Promise<void> {
+    await this.authenticate();
+    const feed = await this.http.post<Record<string, unknown>>(
+      'https://ulip.example/analytics/predictive-feed',
+      { topics: ['demand.forecast', 'capacity.planning'] },
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+    await callback(feed);
+  }
+
+  anonymizeOperationalData(data: Record<string, unknown>): Record<string, unknown> {
+    const redacted = { ...data };
+    const sensitiveKeys = ['retailerId', 'customerName', 'phone', 'email', 'exactAddress', 'containerId'];
+    sensitiveKeys.forEach((key) => {
+      if (key in redacted) {
+        redacted[key] = '[REDACTED]';
+      }
+    });
+    return redacted;
+  }
+
+  async contributeAnonymizedOperationalData(data: Record<string, unknown>): Promise<void> {
+    await this.authenticate();
+    const anonymized = this.anonymizeOperationalData(data);
+    await this.http.post(
+      'https://ulip.example/analytics/contribute',
+      anonymized,
+      { authorization: `Bearer ${this.token?.accessToken}`, 'content-type': 'application/json' }
+    );
+  }
+
   async publishEvent(event: ULIPEvent): Promise<void> {
     this.validateEvent(event);
+    if (this.publishedEventIds.has(event.eventId)) {
+      return;
+    }
     if (this.circuitBreaker.isOpen()) {
       throw new Error('Circuit breaker is open');
     }
@@ -119,12 +725,14 @@ export class ULIPIntegrationService {
           authorization: `Bearer ${this.token?.accessToken}`,
           'content-type': 'application/json',
         });
+        this.publishedEventIds.add(event.eventId);
         this.circuitBreaker.recordSuccess();
         return;
       } catch (error) {
         this.circuitBreaker.recordFailure();
         attempt += 1;
         if (attempt > this.publishConfig.maxRetries) {
+          this.failedRequestQueue.push({ endpoint: 'https://ulip.example/events', payload: event });
           throw error;
         }
 
@@ -135,6 +743,29 @@ export class ULIPIntegrationService {
         await this.sleep(delay);
       }
     }
+  }
+
+
+  getFailedRequestQueueLength(): number {
+    return this.failedRequestQueue.length;
+  }
+
+  async processFailedRequestsQueue(): Promise<number> {
+    await this.authenticate();
+    let processed = 0;
+
+    while (this.failedRequestQueue.length > 0) {
+      const item = this.failedRequestQueue.shift();
+      if (!item) break;
+
+      await this.http.post(item.endpoint, item.payload, {
+        authorization: `Bearer ${this.token?.accessToken}`,
+        'content-type': 'application/json',
+      });
+      processed += 1;
+    }
+
+    return processed;
   }
 
   subscribeToEvents(eventBus: EventBusLike, callback: (event: ULIPEvent) => Promise<void>): void {

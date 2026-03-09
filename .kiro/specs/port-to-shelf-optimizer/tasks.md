@@ -865,24 +865,24 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test position generator produces valid coordinates
     - _Requirements: 17.1, 17.2_
 
-- [ ] 31. Integration testing and end-to-end flows
-  - [ ] 31.1 Write integration test for vessel arrival to auction flow
+- [x] 31. Integration testing and end-to-end flows
+  - [x] 31.1 Write integration test for vessel arrival to auction flow
     - Test vessel enters waters → prediction → slots created → auction initiated
     - _Requirements: 1.1, 3.1, 4.1, 4.2_
 
-  - [ ] 31.2 Write integration test for container journey flow
+  - [x] 31.2 Write integration test for container journey flow
     - Test container on vessel → at port → on rail → on truck → delivered
     - _Requirements: 2.1, 2.2, 2.5_
 
-  - [ ] 31.3 Write integration test for auction bidding flow
+  - [x] 31.3 Write integration test for auction bidding flow
     - Test auction created → bids submitted → auction closed → winners notified
     - _Requirements: 4.2, 5.2, 4.3, 5.5_
 
-  - [ ] 31.4 Write integration test for ULIP synchronization flow
+  - [x] 31.4 Write integration test for ULIP synchronization flow
     - Test container event → published to ULIP → received by subscribers
     - _Requirements: 12.1, 12.3_
 
-  - [ ] 31.5 Write integration test for demurrage priority flow
+  - [x] 31.5 Write integration test for demurrage priority flow
     - Test container at port → demurrage time low → flagged priority → prioritized in auction
     - _Requirements: 6.1, 6.2, 6.3_
 

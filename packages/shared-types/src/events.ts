@@ -5,8 +5,12 @@ export const DOMAIN_EVENT_TYPES = [
   'container.delivered',
   'demurrage.alert',
   'auction.created',
+  'bid.submitted',
+  'auction.closed',
   'auction.bid.placed',
   'slot.reserved',
+  'prediction.generated',
+  'prediction.updated',
   'ulip.event.received',
 ] as const;
 

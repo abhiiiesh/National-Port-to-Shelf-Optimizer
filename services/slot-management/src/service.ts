@@ -32,6 +32,7 @@ export interface EventSubscriber {
 
 export class SlotManagementService {
   private readonly capacityByModeRoute = new Map<string, CapacityInfo>();
+  private readonly reservationIdempotency = new Map<string, Reservation>();
 
   constructor(
     private readonly slotRepository = new SlotRepository(),
@@ -82,6 +83,12 @@ export class SlotManagementService {
   }
 
   async reserveSlot(slotId: string, containerId: string, ttlMinutes = 60): Promise<Reservation> {
+    const key = `${slotId}:${containerId}`;
+    const existingReservation = this.reservationIdempotency.get(key);
+    if (existingReservation && existingReservation.status === ReservationStatus.RESERVED) {
+      return existingReservation;
+    }
+
     const slot = this.mustGetSlot(slotId);
     if (slot.capacity <= 0) {
       throw new Error(`Slot ${slot.id} has zero capacity`);
@@ -107,6 +114,7 @@ export class SlotManagementService {
     };
 
     this.reservationRepository.create(reservation);
+    this.reservationIdempotency.set(key, reservation);
 
     await this.publishEvent({
       eventId: `${reservation.id}-slot-reserved`,

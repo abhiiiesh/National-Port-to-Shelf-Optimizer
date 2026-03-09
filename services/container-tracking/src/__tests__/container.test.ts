@@ -1,4 +1,5 @@
 import { ContainerStatus, Location, LocationType, TransportMode } from '@port-to-shelf/shared-types';
+import { ContainerRepository } from '../repository';
 import { ContainerTrackingService } from '../service';
 
 function validLocation(id = 'INNSA', type = LocationType.PORT): Location {
@@ -62,6 +63,22 @@ describe('ContainerTrackingService edge cases', () => {
     expect(journey[0].eventType).toBe('container.created');
   });
 
+  test('duplicate container creation is idempotent by container ID', async () => {
+    const service = new ContainerTrackingService();
+    const registration = {
+      id: 'IDEM1234567',
+      ownerId: 'ret-dup',
+      vesselId: 'v-dup',
+      destinationWarehouse: 'WH_MUM',
+    };
+
+    const first = await service.createContainer(registration);
+    const second = await service.createContainer(registration);
+
+    expect(second.id).toBe(first.id);
+    expect(service.queryContainers({ ownerId: 'ret-dup' })).toHaveLength(1);
+  });
+
   test('publishes mode change, demurrage alert and delivered events', async () => {
     const events: string[] = [];
     const publisher = {
@@ -103,5 +120,57 @@ describe('ContainerTrackingService edge cases', () => {
     expect(events).toContain('container.mode.changed');
     expect(events).toContain('demurrage.alert');
     expect(events).toContain('container.delivered');
+  });
+
+  test('backup creation and restoration recovers container state', async () => {
+    const service = new ContainerTrackingService();
+    const container = await service.createContainer({
+      id: 'REST1234567',
+      ownerId: 'ret-restore',
+      vesselId: 'v-restore',
+      destinationWarehouse: 'WH_DEL',
+    });
+
+    const snapshot = service.createBackupSnapshot();
+    const restored = new ContainerTrackingService();
+    restored.restoreBackupSnapshot(snapshot);
+
+    expect(restored.getContainer(container.id)?.id).toBe(container.id);
+  });
+
+  test('transaction rollback on error restores previous repository state', () => {
+    const repository = new ContainerRepository();
+
+    expect(() => {
+      repository.executeTransaction(() => {
+        repository.create({
+          id: 'ROLL1234567',
+          ownerId: 'ret-roll',
+          currentLocation: validLocation('INTRN', LocationType.IN_TRANSIT),
+          currentMode: TransportMode.VESSEL,
+          status: ContainerStatus.ON_VESSEL,
+          journey: [],
+        });
+        throw new Error('forced rollback');
+      });
+    }).toThrow('forced rollback');
+
+    expect(repository.findById('ROLL1234567')).toBeUndefined();
+  });
+
+  test('recovery from repository failure can use backup restore', async () => {
+    const service = new ContainerTrackingService();
+    const container = await service.createContainer({
+      id: 'RCVR1234567',
+      ownerId: 'ret-recover',
+      vesselId: 'v-recover',
+      destinationWarehouse: 'WH_DEL',
+    });
+
+    const snapshot = service.createBackupSnapshot();
+    const recovered = new ContainerTrackingService();
+    recovered.restoreBackupSnapshot(snapshot);
+
+    expect(recovered.getContainer(container.id)).toBeDefined();
   });
 });

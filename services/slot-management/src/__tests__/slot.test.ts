@@ -130,4 +130,30 @@ describe('SlotManagementService edge cases and integration', () => {
     await service.reserveSlot(slot.id, 'IJKL1234567');
     expect(seenEvents).toContain('slot.reserved');
   });
+
+  test('duplicate slot reservation is idempotent by reservation key', async () => {
+    const service = new SlotManagementService();
+    service.updateCapacity({
+      mode: TransportMode.RAIL,
+      route: { origin: 'INNSA', destination: 'INDEL' },
+      totalCapacity: 5,
+      availableCapacity: 5,
+      reservedCapacity: 0,
+      utilizationRate: 0,
+    });
+
+    const [slot] = service.createSlots({
+      vesselId: 'v-idem-res',
+      portId: 'INNSA',
+      predictedArrival: new Date(),
+      containerCount: 1,
+      destinations: ['INDEL'],
+    });
+
+    const first = await service.reserveSlot(slot.id, 'IDEMRES00001');
+    const second = await service.reserveSlot(slot.id, 'IDEMRES00001');
+
+    expect(second.id).toBe(first.id);
+    expect(service.getAvailableCapacity(TransportMode.RAIL, 'INNSA', 'INDEL')).toBe(4);
+  });
 });
