@@ -1,0 +1,20 @@
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+COPY packages ./packages
+COPY services ./services
+COPY tsconfig.json jest.config.js jest.setup.js ./
+RUN npm ci
+
+FROM deps AS builder
+ARG SERVICE_PATH
+RUN npm run build --workspace=${SERVICE_PATH}
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ARG SERVICE_PATH
+COPY --from=deps /app/package*.json ./
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/${SERVICE_PATH}/dist ./dist
+EXPOSE 3000
+CMD ["node", "dist/index.js"]
