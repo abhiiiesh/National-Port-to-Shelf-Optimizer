@@ -164,15 +164,15 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test invalid position coordinates
     - _Requirements: 1.1, 1.2, 1.3_
 
-- [ ] 9. Container Tracking Service
-  - [ ] 9.1 Implement Container entity and repository
+- [x] 9. Container Tracking Service
+  - [x] 9.1 Implement Container entity and repository
     - Create Container, Location, JourneyEvent, DemurrageInfo interfaces
     - Implement ISO 6346 container ID validation
     - Implement UN/LOCODE location validation
     - Create container status and transport mode enums
     - _Requirements: 2.1, 17.1, 17.2_
 
-  - [ ] 9.2 Implement container tracking methods
+  - [x] 9.2 Implement container tracking methods
     - Implement createContainer() method
     - Implement updateTransportMode() method
     - Implement getContainerJourney() method
@@ -180,51 +180,51 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Implement markDelivered() method
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-  - [ ] 9.3 Implement demurrage tracking
+  - [x] 9.3 Implement demurrage tracking
     - Calculate demurrage-free time on container arrival at port
     - Flag containers as high priority when < 24 hours remaining
     - Track demurrage costs
     - _Requirements: 6.1, 6.2, 6.4, 6.5_
 
-  - [ ] 9.4 Integrate container tracking with event bus
+  - [x] 9.4 Integrate container tracking with event bus
     - Publish container.mode.changed events
     - Publish container.delivered events
     - Publish demurrage.alert events
     - _Requirements: 2.2, 2.5, 6.2_
 
-  - [ ] 9.5 Write property test for container tracking record creation
+  - [x] 9.5 Write property test for container tracking record creation
     - **Property 6: Container Tracking Record Creation**
     - **Validates: Requirements 2.1**
 
-  - [ ] 9.6 Write property test for transport mode transition
+  - [x] 9.6 Write property test for transport mode transition
     - **Property 7: Transport Mode Transition Recording**
     - **Validates: Requirements 2.2**
 
-  - [ ] 9.7 Write property test for journey history completeness
+  - [x] 9.7 Write property test for journey history completeness
     - **Property 8: Journey History Completeness**
     - **Validates: Requirements 2.3**
 
-  - [ ] 9.8 Write property test for container location consistency
+  - [x] 9.8 Write property test for container location consistency
     - **Property 9: Container Location Consistency**
     - **Validates: Requirements 2.4**
 
-  - [ ] 9.9 Write property test for journey completion marking
+  - [x] 9.9 Write property test for journey completion marking
     - **Property 10: Journey Completion Marking**
     - **Validates: Requirements 2.5**
 
-  - [ ] 9.10 Write property test for demurrage-free time calculation
+  - [x] 9.10 Write property test for demurrage-free time calculation
     - **Property 25: Demurrage-Free Time Calculation**
     - **Validates: Requirements 6.1**
 
-  - [ ] 9.11 Write property test for high priority flagging
+  - [x] 9.11 Write property test for high priority flagging
     - **Property 26: High Priority Flagging**
     - **Validates: Requirements 6.2**
 
-  - [ ] 9.12 Write property test for retailer data isolation
+  - [x] 9.12 Write property test for retailer data isolation
     - **Property 45: Retailer Data Isolation**
     - **Validates: Requirements 10.4**
 
-  - [ ] 9.13 Write unit tests for container tracking edge cases
+  - [x] 9.13 Write unit tests for container tracking edge cases
     - Test invalid ISO 6346 container ID
     - Test invalid UN/LOCODE
     - Test container with no journey events
