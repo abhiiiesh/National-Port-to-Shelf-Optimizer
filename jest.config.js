@@ -1,8 +1,21 @@
+const runDbTests = process.env.RUN_DB_TESTS === 'true';
+
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/packages', '<rootDir>/services'],
-  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
+  testMatch: ['**/?(*.)+(spec|test).ts'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    ...(runDbTests
+      ? []
+      : [
+          '<rootDir>/services/authentication/src/__tests__/auth.test.ts',
+          '<rootDir>/services/authentication/src/__tests__/auth.property.test.ts',
+          '<rootDir>/services/authentication/src/__tests__/auth-logging.property.test.ts',
+          '<rootDir>/packages/database/src/__tests__/',
+        ]),
+  ],
   collectCoverageFrom: [
     '**/*.ts',
     '!**/*.d.ts',
