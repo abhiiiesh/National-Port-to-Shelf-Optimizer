@@ -412,50 +412,50 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test bid on expired auction
     - _Requirements: 4.3, 5.2_
 
-- [ ] 15. Performance Metrics and Reporting Service
-  - [ ] 15.1 Implement metrics data models
+- [x] 15. Performance Metrics and Reporting Service
+  - [x] 15.1 Implement metrics data models
     - Create interfaces for timeline metrics, demurrage metrics, auction metrics
     - Create metrics repository
     - _Requirements: 8.1, 8.2, 8.4_
 
-  - [ ] 15.2 Implement metrics calculation methods
+  - [x] 15.2 Implement metrics calculation methods
     - Calculate port-to-shelf timeline for completed journeys
     - Calculate average demurrage costs
     - Calculate auction participation rates
     - Calculate slot utilization rates
     - _Requirements: 8.1, 8.2, 8.3, 8.4_
 
-  - [ ] 15.3 Implement reporting methods
+  - [x] 15.3 Implement reporting methods
     - Generate performance reports with all required metrics
     - Include baseline comparison when available
     - _Requirements: 8.3, 8.5_
 
-  - [ ] 15.4 Integrate metrics service with event bus
+  - [x] 15.4 Integrate metrics service with event bus
     - Subscribe to container.delivered events
     - Subscribe to auction.closed events
     - _Requirements: 8.1, 8.4_
 
-  - [ ] 15.5 Write property test for timeline calculation
+  - [x] 15.5 Write property test for timeline calculation
     - **Property 35: Port-to-Shelf Timeline Calculation**
     - **Validates: Requirements 8.1**
 
-  - [ ] 15.6 Write property test for average demurrage cost
+  - [x] 15.6 Write property test for average demurrage cost
     - **Property 36: Average Demurrage Cost Calculation**
     - **Validates: Requirements 8.2**
 
-  - [ ] 15.7 Write property test for report metrics completeness
+  - [x] 15.7 Write property test for report metrics completeness
     - **Property 37: Report Metrics Completeness**
     - **Validates: Requirements 8.3**
 
-  - [ ] 15.8 Write property test for auction metrics tracking
+  - [x] 15.8 Write property test for auction metrics tracking
     - **Property 38: Auction Metrics Tracking**
     - **Validates: Requirements 8.4**
 
-  - [ ] 15.9 Write property test for baseline comparison
+  - [x] 15.9 Write property test for baseline comparison
     - **Property 39: Baseline Comparison Metrics**
     - **Validates: Requirements 8.5**
 
-  - [ ] 15.10 Write unit tests for metrics edge cases
+  - [x] 15.10 Write unit tests for metrics edge cases
     - Test metrics with no completed journeys
     - Test metrics with zero demurrage costs
     - Test report generation without baseline
