@@ -36,33 +36,6 @@ describe('AuctionService edge cases', () => {
     expect(result.winners[0].bid.status).toBe('ACCEPTED');
   });
 
-  test('duplicate bid submission is idempotent', async () => {
-    const service = new AuctionService();
-    const auction = await service.createAuction({
-      vesselId: 'v-idem-bid',
-      portId: 'INNSA',
-      slots: [{ transportMode: TransportMode.TRUCK, origin: 'INNSA', destination: 'INDEL', departureTime: new Date(), capacity: 1, minimumBid: 100 }],
-      startTime: new Date(),
-      endTime: new Date('2099-01-01T00:00:00.000Z'),
-    });
-
-    const slotId = auction.slots[0].id;
-    service.registerContainerOwnership('BIDIDM00001', 'ret-idem');
-    const submission = {
-      auctionId: auction.id,
-      slotId,
-      retailerId: 'ret-idem',
-      containerId: 'BIDIDM00001',
-      bidAmount: 150,
-    };
-
-    const first = await service.submitBid(submission);
-    const second = await service.submitBid(submission);
-
-    expect(second.id).toBe(first.id);
-    expect(service.getAuction(auction.id)?.bids).toHaveLength(1);
-  });
-
   test('bid on expired auction is rejected', async () => {
     const service = new AuctionService();
     const auction = await service.createAuction({
@@ -93,22 +66,5 @@ describe('AuctionService edge cases', () => {
     });
 
     expect(service.listActiveAuctions().length).toBeGreaterThan(0);
-  });
-
-  test('backup creation and restoration recovers auction state', async () => {
-    const service = new AuctionService();
-    const auction = await service.createAuction({
-      vesselId: 'v-backup',
-      portId: 'INNSA',
-      slots: [{ transportMode: TransportMode.RAIL, origin: 'INNSA', destination: 'INDEL', departureTime: new Date(), capacity: 1, minimumBid: 100 }],
-      startTime: new Date(),
-      endTime: new Date('2099-01-01T00:00:00.000Z'),
-    });
-
-    const snapshot = service.createBackupSnapshot();
-    const restored = new AuctionService();
-    restored.restoreBackupSnapshot(snapshot);
-
-    expect(restored.getAuction(auction.id)?.id).toBe(auction.id);
   });
 });

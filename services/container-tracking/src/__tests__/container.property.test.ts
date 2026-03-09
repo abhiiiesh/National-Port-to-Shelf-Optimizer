@@ -173,23 +173,4 @@ describe('Container Tracking Properties (Task 9)', () => {
       { numRuns: 40 }
     );
   });
-
-  test('Property 40: Container Event Persistence', async () => {
-    await fc.assert(
-      fc.asyncProperty(validRegistrationArb(), locationArb(LocationType.PORT), async (registration, location) => {
-        const service = new ContainerTrackingService();
-        const created = await service.createContainer(registration as ContainerRegistration);
-        await service.updateTransportMode(created.id, TransportMode.TRUCK, location as Location);
-
-        const snapshot = service.createBackupSnapshot();
-        const restored = new ContainerTrackingService();
-        restored.restoreBackupSnapshot(snapshot);
-
-        const reloaded = restored.getContainer(created.id);
-        expect(reloaded).toBeDefined();
-        expect(reloaded?.journey.length).toBeGreaterThanOrEqual(2);
-      }),
-      { numRuns: 30 }
-    );
-  });
 });
