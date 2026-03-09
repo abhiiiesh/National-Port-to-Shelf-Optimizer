@@ -7,8 +7,6 @@ export const DOMAIN_EVENT_TYPES = [
   'auction.created',
   'auction.bid.placed',
   'slot.reserved',
-  'prediction.generated',
-  'prediction.updated',
   'ulip.event.received',
 ] as const;
 
