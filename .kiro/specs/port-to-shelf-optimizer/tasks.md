@@ -43,7 +43,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
   - Ask the user if questions arise
 
 
-- [ ] 4. Authentication and authorization service
+- [x] 4. Authentication and authorization service
   - [x] 4.1 Implement authentication service
     - Create User entity and repository
     - Implement password hashing (bcrypt)
@@ -961,4 +961,3 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
 - TypeScript will be used for all implementation
 - fast-check will be used for property-based testing
 - Jest will be used for unit testing
-
