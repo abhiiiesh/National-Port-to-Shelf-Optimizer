@@ -467,61 +467,61 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
   - Ask the user if questions arise
 
 
-- [ ] 17. ULIP Integration Service - Authentication and Core
-  - [ ] 17.1 Implement ULIP authentication
+- [x] 17. ULIP Integration Service - Authentication and Core
+  - [x] 17.1 Implement ULIP authentication
     - Implement OAuth 2.0 client for ULIP
     - Implement authenticate() method to obtain access tokens
     - Implement token refresh logic
     - Implement connection health monitoring
     - _Requirements: 11.1, 11.2, 11.5_
 
-  - [ ] 17.2 Implement ULIP event publishing
+  - [x] 17.2 Implement ULIP event publishing
     - Implement publishEvent() method
     - Implement rate limiting with exponential backoff
     - Implement retry logic with circuit breaker
     - Ensure events published within 30 seconds
     - _Requirements: 11.3, 11.4, 12.1_
 
-  - [ ] 17.3 Implement ULIP event subscription
+  - [x] 17.3 Implement ULIP event subscription
     - Implement subscribeToEvents() method
     - Subscribe to port operations, rail movements, road transport events
     - Implement event validation against ULIP schemas
     - Implement conflict resolution with timestamp precedence
     - _Requirements: 12.3, 12.4, 12.5_
 
-  - [ ] 17.4 Write property test for OAuth 2.0 authentication
+  - [x] 17.4 Write property test for OAuth 2.0 authentication
     - **Property 47: OAuth 2.0 ULIP Authentication**
     - **Validates: Requirements 11.2**
 
-  - [ ] 17.5 Write property test for ULIP data format compliance
+  - [x] 17.5 Write property test for ULIP data format compliance
     - **Property 48: ULIP Data Format Compliance**
     - **Validates: Requirements 11.3**
 
-  - [ ] 17.6 Write property test for rate limit backoff
+  - [x] 17.6 Write property test for rate limit backoff
     - **Property 49: Rate Limit Backoff**
     - **Validates: Requirements 11.4**
 
-  - [ ] 17.7 Write property test for connection resilience
+  - [x] 17.7 Write property test for connection resilience
     - **Property 50: ULIP Connection Resilience**
     - **Validates: Requirements 11.5**
 
-  - [ ] 17.8 Write property test for container event publishing
+  - [x] 17.8 Write property test for container event publishing
     - **Property 51: Container Event Publishing to ULIP**
     - **Validates: Requirements 12.1**
 
-  - [ ] 17.9 Write property test for vessel data synchronization
+  - [x] 17.9 Write property test for vessel data synchronization
     - **Property 52: Vessel Data Synchronization to ULIP**
     - **Validates: Requirements 12.2**
 
-  - [ ] 17.10 Write property test for ULIP data validation
+  - [x] 17.10 Write property test for ULIP data validation
     - **Property 53: ULIP Event Data Validation**
     - **Validates: Requirements 12.4**
 
-  - [ ] 17.11 Write property test for timestamp-based conflict resolution
+  - [x] 17.11 Write property test for timestamp-based conflict resolution
     - **Property 54: Timestamp-Based Conflict Resolution**
     - **Validates: Requirements 12.5**
 
-  - [ ] 17.12 Write unit tests for ULIP integration edge cases
+  - [x] 17.12 Write unit tests for ULIP integration edge cases
     - Test authentication failure
     - Test token expiration
     - Test rate limit response handling
