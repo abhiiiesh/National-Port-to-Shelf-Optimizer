@@ -461,7 +461,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test report generation without baseline
     - _Requirements: 8.1, 8.2, 8.5_
 
-- [ ] 16. Checkpoint - Core business logic complete
+- [x] 16. Checkpoint - Core business logic complete
   - Ensure auctions work end-to-end
   - Verify metrics are calculated correctly
   - Ask the user if questions arise
