@@ -7,3 +7,5 @@ export * from './prediction';
 export * from './ulip';
 export * from './auth';
 export * from './common';
+
+export * from './events';
