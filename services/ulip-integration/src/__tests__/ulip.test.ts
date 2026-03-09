@@ -1,0 +1,83 @@
+import { ULIPIntegrationService } from '../service';
+
+describe('ULIPIntegrationService edge cases (Task 17.12)', () => {
+  test('authentication failure bubbles error', async () => {
+    const service = new ULIPIntegrationService(
+      { clientId: 'a', clientSecret: 'b', tokenEndpoint: 'https://ulip/token', defaultScope: ['x'] },
+      { post: async () => { throw new Error('auth failed'); } }
+    );
+
+    await expect(service.authenticate()).rejects.toThrow('auth failed');
+  });
+
+  test('token expiration triggers refresh logic', async () => {
+    let tokenCalls = 0;
+    const service = new ULIPIntegrationService(
+      { clientId: 'a', clientSecret: 'b', tokenEndpoint: 'https://ulip/token', defaultScope: ['x'] },
+      {
+        post: async (url: string) => {
+          if (url.includes('/token')) {
+            tokenCalls += 1;
+            return { accessToken: `tok-${tokenCalls}`, tokenType: 'Bearer', expiresIn: 0, scope: ['x'] };
+          }
+          return { ok: true };
+        },
+      }
+    );
+
+    const t1 = await service.authenticate();
+    const t2 = await service.authenticate();
+    expect(t1.accessToken).not.toBe(t2.accessToken);
+  });
+
+  test('rate limit response handling retries then succeeds', async () => {
+    let eventCalls = 0;
+    const service = new ULIPIntegrationService(
+      { clientId: 'a', clientSecret: 'b', tokenEndpoint: 'https://ulip/token', defaultScope: ['x'] },
+      {
+        post: async (url: string) => {
+          if (url.includes('/token')) {
+            return { accessToken: 'tok', tokenType: 'Bearer', expiresIn: 3600, scope: ['x'] };
+          }
+          eventCalls += 1;
+          if (eventCalls <= 2) throw new Error('429 rate limit');
+          return { ok: true };
+        },
+      }
+    );
+
+    await service.publishEvent({
+      eventId: 'evt',
+      eventType: 'container.updated',
+      timestamp: new Date(),
+      source: 'svc',
+      data: {},
+      metadata: {},
+    });
+
+    expect(eventCalls).toBe(3);
+  });
+
+  test('circuit breaker opens after repeated failures', async () => {
+    const service = new ULIPIntegrationService(
+      { clientId: 'a', clientSecret: 'b', tokenEndpoint: 'https://ulip/token', defaultScope: ['x'] },
+      {
+        post: async (url: string) => {
+          if (url.includes('/token')) {
+            return { accessToken: 'tok', tokenType: 'Bearer', expiresIn: 3600, scope: ['x'] };
+          }
+          throw new Error('always fail');
+        },
+      },
+      { maxRetries: 0, initialBackoffMs: 1, maxBackoffMs: 1, circuitBreakerThreshold: 1, publishTimeoutMs: 1000 }
+    );
+
+    await expect(
+      service.publishEvent({ eventId: 'evt1', eventType: 'x', timestamp: new Date(), source: 'svc', data: {}, metadata: {} })
+    ).rejects.toThrow('always fail');
+
+    await expect(
+      service.publishEvent({ eventId: 'evt2', eventType: 'x', timestamp: new Date(), source: 'svc', data: {}, metadata: {} })
+    ).rejects.toThrow('Circuit breaker is open');
+  });
+});
