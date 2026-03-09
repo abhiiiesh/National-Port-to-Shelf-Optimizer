@@ -80,15 +80,15 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test missing authorization headers
     - _Requirements: 10.1, 10.3_
 
-- [ ] 5. API Gateway setup
-  - [ ] 5.1 Implement API Gateway with Kong or Express Gateway
+- [x] 5. API Gateway setup
+  - [x] 5.1 Implement API Gateway with Kong or Express Gateway
     - Configure routing to microservices
     - Implement rate limiting
     - Configure CORS policy
     - Integrate authentication middleware
     - _Requirements: 10.1_
 
-  - [ ] 5.2 Write unit tests for API Gateway
+  - [x] 5.2 Write unit tests for API Gateway
     - Test rate limiting enforcement
     - Test authentication requirement on protected routes
     - Test CORS headers
