@@ -559,8 +559,8 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test port data query timeout
     - _Requirements: 13.2, 13.3, 13.4_
 
-- [ ] 19. ULIP Integration Service - CONCOR Rail Integration
-  - [ ] 19.1 Implement rail integration methods
+- [x] 19. ULIP Integration Service - CONCOR Rail Integration
+  - [x] 19.1 Implement rail integration methods
     - Implement queryRailCapacity() method
     - Implement createRailBooking() method
     - Process rail wagon tracking updates
@@ -568,31 +568,31 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Query rail routes and transit times
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5_
 
-  - [ ] 19.2 Write property test for rail capacity data access
+  - [x] 19.2 Write property test for rail capacity data access
     - **Property 59: Rail Capacity Data Access**
     - **Validates: Requirements 14.1**
 
-  - [ ] 19.3 Write property test for rail booking request creation
+  - [x] 19.3 Write property test for rail booking request creation
     - **Property 60: Rail Booking Request Creation**
     - **Validates: Requirements 14.2**
 
-  - [ ] 19.4 Write property test for rail tracking update processing
+  - [x] 19.4 Write property test for rail tracking update processing
     - **Property 61: Rail Tracking Update Processing**
     - **Validates: Requirements 14.3**
 
-  - [ ] 19.5 Write property test for rail delay notification
+  - [x] 19.5 Write property test for rail delay notification
     - **Property 62: Rail Delay Notification Processing**
     - **Validates: Requirements 14.4**
 
-  - [ ] 19.6 Write property test for rail route query
+  - [x] 19.6 Write property test for rail route query
     - **Property 63: Rail Route Query**
     - **Validates: Requirements 14.5**
 
-  - [ ] 19.7 Write property test for rail booking communication
+  - [x] 19.7 Write property test for rail booking communication
     - **Property 30: Rail Booking Communication**
     - **Validates: Requirements 7.1**
 
-  - [ ] 19.8 Write unit tests for rail integration edge cases
+  - [x] 19.8 Write unit tests for rail integration edge cases
     - Test rail booking with no available capacity
     - Test rail delay notification processing
     - Test rail route query with no routes
