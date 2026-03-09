@@ -678,8 +678,8 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test regulatory hold processing
     - _Requirements: 16.1, 16.3, 16.5_
 
-- [ ] 23. ULIP Data Standards Compliance
-  - [ ] 23.1 Implement data format validators
+- [x] 23. ULIP Data Standards Compliance
+  - [x] 23.1 Implement data format validators
     - Implement ISO 6346 container ID validator
     - Implement UN/LOCODE location validator
     - Implement ISO 8601 timestamp formatter with IST
@@ -687,27 +687,27 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Implement ULIP JSON schema validator
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5_
 
-  - [ ] 23.2 Write property test for ISO 6346 format
+  - [x] 23.2 Write property test for ISO 6346 format
     - **Property 74: ISO 6346 Container ID Format**
     - **Validates: Requirements 17.1**
 
-  - [ ] 23.3 Write property test for UN/LOCODE format
+  - [x] 23.3 Write property test for UN/LOCODE format
     - **Property 75: UN/LOCODE Location Format**
     - **Validates: Requirements 17.2**
 
-  - [ ] 23.4 Write property test for ISO 8601 timestamp format
+  - [x] 23.4 Write property test for ISO 8601 timestamp format
     - **Property 76: ISO 8601 Timestamp Format with IST**
     - **Validates: Requirements 17.3**
 
-  - [ ] 23.5 Write property test for ULIP event taxonomy
+  - [x] 23.5 Write property test for ULIP event taxonomy
     - **Property 77: ULIP Event Taxonomy Compliance**
     - **Validates: Requirements 17.4**
 
-  - [ ]* 23.6 Write property test for ULIP JSON schema validation (round-trip)
+  - [x]* 23.6 Write property test for ULIP JSON schema validation (round-trip)
     - **Property 78: ULIP JSON Schema Validation (Round-Trip)**
     - **Validates: Requirements 17.5**
 
-  - [ ] 23.7 Write unit tests for data format validation edge cases
+  - [x] 23.7 Write unit tests for data format validation edge cases
     - Test invalid ISO 6346 container IDs
     - Test invalid UN/LOCODE formats
     - Test timestamp timezone conversion
