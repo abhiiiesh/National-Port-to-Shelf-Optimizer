@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces",
+    "test": "jest",
     "test:unit": "jest",
     "test:property": "jest --testPathPattern=\\.property\\.test\\.ts$",
     "lint": "eslint . --ext .ts,.tsx",
@@ -17,7 +17,15 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
     "dev": "docker-compose up -d",
     "dev:down": "docker-compose down",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "perf:load": "k6 run tests/performance/k6/load-test.js",
+    "perf:stress": "k6 run tests/performance/k6/stress-test.js",
+    "perf:spike": "k6 run tests/performance/k6/spike-test.js",
+    "perf:throughput": "k6 run tests/performance/k6/throughput-test.js",
+    "perf:ulip": "k6 run tests/performance/k6/ulip-latency-test.js",
+    "perf:all": "npm run perf:load && npm run perf:stress && npm run perf:spike && npm run perf:throughput && npm run perf:ulip",
+    "test:workspaces": "npm run test --workspaces",
+    "checkpoint:final": "bash scripts/final-checkpoint.sh"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
