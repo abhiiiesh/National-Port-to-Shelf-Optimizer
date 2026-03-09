@@ -125,6 +125,17 @@ Implemented design/a11y reinforcement baseline assets:
 
 ## 4) Domain UX Implementation Tracks
 
+### 4.0 Implementation status (completed)
+
+Implemented domain UX baseline assets:
+
+- Tracking timeline mapper with anomaly flagging for delayed and arrived vessels
+- Slot recommendation engine for capacity/ETA-aware ordering
+- Auction winner selector with deterministic timestamp tie-break behavior
+- KPI delta view mapper with filter-aware comparison labels
+- ULIP sync banner model for healthy/stale/conflict operational messaging
+- Dedicated tests validating each domain UX track behavior
+
 ### 4.1 Vessel and Container Tracking UX
 1. Build timeline/map-centric views for shipment progression.
 2. Add deterministic status progression UI tied to backend state machines.
