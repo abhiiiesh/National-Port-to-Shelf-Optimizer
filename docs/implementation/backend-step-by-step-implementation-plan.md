@@ -263,6 +263,14 @@ Implemented frontend deployment/release baseline assets:
 
 ## 9) Suggested Sprint Sequencing
 
+### 9.0 Implementation status (completed)
+
+Sequencing goals are now represented in delivered frontend modules/tests:
+
+- Sprint 1 hardening outcomes are reflected in strict type/lint/build and route/error-state foundations
+- Sprint 2 reliability outcomes are reflected in domain UX, API contract, and accessibility validation suites
+- Sprint 3 operational outcomes are reflected in observability/alerts, deployment gates, and runbook linkage helpers
+
 ### Sprint 1 (Hardening)
 - Frontend TypeScript/lint/build consistency
 - Route guards + standardized loading/error states
@@ -281,6 +289,14 @@ Implemented frontend deployment/release baseline assets:
 ---
 
 ## 10) Exit Criteria for “Production Ready Frontend”
+
+### 10.0 Implementation status (completed)
+
+Exit-criteria enforcement helpers and tests are now in place:
+
+- Centralized release-quality gate evaluation
+- Production-readiness checklist evaluator aligned with the six exit criteria
+- Tests covering release-ready and non-ready candidate scenarios
 
 A release candidate is considered production-ready when:
 
