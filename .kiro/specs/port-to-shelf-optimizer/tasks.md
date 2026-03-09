@@ -528,8 +528,8 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test circuit breaker opening
     - _Requirements: 11.2, 11.4, 11.5_
 
-- [ ] 18. ULIP Integration Service - Port Community Systems
-  - [ ] 18.1 Implement port integration methods
+- [x] 18. ULIP Integration Service - Port Community Systems
+  - [x] 18.1 Implement port integration methods
     - Implement queryPortData() method
     - Connect to major Indian ports via ULIP (Mumbai, Chennai, Kolkata, Visakhapatnam)
     - Process berthing notifications
@@ -537,23 +537,23 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Publish container pickup requests
     - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5_
 
-  - [ ] 18.2 Write property test for berthing notification processing
+  - [x] 18.2 Write property test for berthing notification processing
     - **Property 55: Berthing Notification Processing**
     - **Validates: Requirements 13.2**
 
-  - [ ] 18.3 Write property test for gate event processing
+  - [x] 18.3 Write property test for gate event processing
     - **Property 56: Gate Event Processing**
     - **Validates: Requirements 13.3**
 
-  - [ ] 18.4 Write property test for port data query
+  - [x] 18.4 Write property test for port data query
     - **Property 57: Port Data Query for Slot Planning**
     - **Validates: Requirements 13.4**
 
-  - [ ] 18.5 Write property test for container pickup request
+  - [x] 18.5 Write property test for container pickup request
     - **Property 58: Container Pickup Request Publishing**
     - **Validates: Requirements 13.5**
 
-  - [ ] 18.6 Write unit tests for port integration edge cases
+  - [x] 18.6 Write unit tests for port integration edge cases
     - Test berthing notification with missing data
     - Test gate event for unknown container
     - Test port data query timeout
