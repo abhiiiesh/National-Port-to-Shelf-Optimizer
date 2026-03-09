@@ -91,11 +91,9 @@ export class AuctionService {
       status: BidStatus.SUBMITTED,
     };
 
-    this.bidRepository.executeTransaction(() => {
-      this.bidRepository.create(bid);
-      auction.bids.push(bid);
-      this.auctionRepository.update(auction);
-    });
+    this.bidRepository.create(bid);
+    auction.bids.push(bid);
+    this.auctionRepository.update(auction);
 
     await this.publish({
       eventId: `${bid.id}-submitted`,
@@ -147,7 +145,6 @@ export class AuctionService {
     auction.status = AuctionStatus.CLOSED;
     auction.bids = this.bidRepository.listByAuction(auctionId);
     this.auctionRepository.update(auction);
-    this.bidRepository.recordAuctionClose(auctionId);
 
     const result: AuctionResult = {
       auctionId,
@@ -169,25 +166,6 @@ export class AuctionService {
 
   getAuction(auctionId: string): Auction | undefined {
     return this.auctionRepository.findById(auctionId);
-  }
-
-  getTransactionLog() {
-    return this.bidRepository.listTransactions();
-  }
-
-  createBackupSnapshot() {
-    return this.bidRepository.createBackup(this.auctionRepository.list());
-  }
-
-  restoreBackupSnapshot(snapshot: ReturnType<BidRepository['createBackup']>): void {
-    this.bidRepository.restoreBackup(snapshot);
-    snapshot.auctions.forEach((auction) => {
-      if (this.auctionRepository.findById(auction.id)) {
-        this.auctionRepository.update({ ...auction, slots: [...auction.slots], bids: [...auction.bids] });
-      } else {
-        this.auctionRepository.create({ ...auction, slots: [...auction.slots], bids: [...auction.bids] });
-      }
-    });
   }
 
   listActiveAuctions(destination?: string): Auction[] {

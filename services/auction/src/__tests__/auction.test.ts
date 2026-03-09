@@ -67,21 +67,4 @@ describe('AuctionService edge cases', () => {
 
     expect(service.listActiveAuctions().length).toBeGreaterThan(0);
   });
-
-  test('backup creation and restoration recovers auction state', async () => {
-    const service = new AuctionService();
-    const auction = await service.createAuction({
-      vesselId: 'v-backup',
-      portId: 'INNSA',
-      slots: [{ transportMode: TransportMode.RAIL, origin: 'INNSA', destination: 'INDEL', departureTime: new Date(), capacity: 1, minimumBid: 100 }],
-      startTime: new Date(),
-      endTime: new Date('2099-01-01T00:00:00.000Z'),
-    });
-
-    const snapshot = service.createBackupSnapshot();
-    const restored = new AuctionService();
-    restored.restoreBackupSnapshot(snapshot);
-
-    expect(restored.getAuction(auction.id)?.id).toBe(auction.id);
-  });
 });

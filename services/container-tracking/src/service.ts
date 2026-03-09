@@ -57,11 +57,7 @@ export class ContainerTrackingService {
     };
 
     this.destinationWarehouseByContainer.set(container.id, registration.destinationWarehouse);
-    return this.repository.executeTransaction(() => {
-      const created = this.repository.create(container);
-      this.repository.persistJourneyEvent(created.id, journeyEvent);
-      return created;
-    });
+    return this.repository.create(container);
   }
 
   async updateTransportMode(
@@ -98,10 +94,7 @@ export class ContainerTrackingService {
       updated.demurrageInfo = this.refreshDemurrage(updated.demurrageInfo, timestamp);
     }
 
-    this.repository.executeTransaction(() => {
-      this.repository.update(updated);
-      this.repository.persistJourneyEvent(updated.id, event);
-    });
+    this.repository.update(updated);
 
     await this.publishEvent({
       eventId: `${updated.id}-${timestamp.getTime()}-mode`,
@@ -178,10 +171,7 @@ export class ContainerTrackingService {
       delivered.demurrageInfo = this.refreshDemurrage(delivered.demurrageInfo, timestamp);
     }
 
-    this.repository.executeTransaction(() => {
-      this.repository.update(delivered);
-      this.repository.persistJourneyEvent(containerId, deliveredEvent);
-    });
+    this.repository.update(delivered);
 
     await this.publishEvent({
       eventId: `${containerId}-${timestamp.getTime()}-delivered`,
@@ -200,14 +190,6 @@ export class ContainerTrackingService {
 
   getContainer(containerId: string): Container | undefined {
     return this.repository.findById(containerId);
-  }
-
-  createBackupSnapshot() {
-    return this.repository.createBackup();
-  }
-
-  restoreBackupSnapshot(snapshot: ReturnType<ContainerRepository['createBackup']>): void {
-    this.repository.restoreBackup(snapshot);
   }
 
   private mustGetContainer(containerId: string): Container {
