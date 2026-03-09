@@ -113,7 +113,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test idempotency with duplicate event IDs
     - _Requirements: 9.1, 9.2_
 
-- [ ] 7. Checkpoint - Core infrastructure
+- [x] 7. Checkpoint - Core infrastructure
   - Ensure authentication works end-to-end
   - Verify event bus can publish and consume events
   - Ask the user if questions arise
