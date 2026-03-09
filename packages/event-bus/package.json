@@ -1,0 +1,18 @@
+{
+  "name": "@port-to-shelf/event-bus",
+  "version": "1.0.0",
+  "description": "In-memory Kafka-style event bus abstractions for Port-to-Shelf Optimizer",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@port-to-shelf/shared-types": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
