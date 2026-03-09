@@ -211,6 +211,15 @@ Implemented frontend testing-strategy baseline assets:
 
 ## 7) Observability and Operations
 
+### 7.0 Implementation status (completed)
+
+Implemented frontend observability/operations baseline assets:
+
+- Telemetry event model/store for route, interaction, error, and business events
+- SLO-based alert evaluator for frontend error-rate and p95 interaction latency
+- Dashboard and runbook link registry with alert-to-runbook resolution
+- Dedicated tests validating telemetry capture, alert severity behavior, and runbook mapping
+
 ### 7.1 Frontend telemetry
 1. Capture page load, route transition, and key interaction timings.
 2. Track frontend errors with release/version tags.

@@ -3,14 +3,15 @@ const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '../../services/frontend/src');
-const layers = ['app', 'features', 'shared', 'config', 'security'];
+const layers = ['app', 'features', 'shared', 'config', 'security', 'observability'];
 
 const allowed = {
-  app: new Set(['app', 'features', 'shared', 'config', 'security']),
-  features: new Set(['features', 'shared', 'config', 'security']),
-  shared: new Set(['shared', 'config']),
+  app: new Set(['app', 'features', 'shared', 'config', 'security', 'observability']),
+  features: new Set(['features', 'shared', 'config', 'security', 'observability']),
+  shared: new Set(['shared', 'config', 'observability']),
   config: new Set(['config']),
-  security: new Set(['security', 'config', 'shared']),
+  security: new Set(['security', 'config', 'shared', 'observability']),
+  observability: new Set(['observability', 'shared', 'config']),
 };
 
 const importRegex = /from\s+['"]([^'"]+)['"]/g;
@@ -43,6 +44,7 @@ const resolveLayerFromImport = (sourceLayer, importPath) => {
   if (importPath.startsWith('@shared/')) return 'shared';
   if (importPath.startsWith('@config/')) return 'config';
   if (importPath.startsWith('@security/')) return 'security';
+  if (importPath.startsWith('@observability/')) return 'observability';
 
   if (importPath.startsWith('.')) {
     const layerDir = path.resolve(root, sourceLayer);

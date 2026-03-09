@@ -26,6 +26,9 @@
       ],
       "@security/*": [
         "security/*"
+      ],
+      "@observability/*": [
+        "observability/*"
       ]
     }
   },
