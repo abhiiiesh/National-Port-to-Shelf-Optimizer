@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: ghcr.io/example/port-to-shelf/api-gateway:latest
+          image: ghcr.io/abhiiiesh/port-to-shelf-api-gateway:latest
           ports:
             - containerPort: 3000
           envFrom:
@@ -49,7 +49,7 @@ spec:
     spec:
       containers:
         - name: authentication
-          image: ghcr.io/example/port-to-shelf/authentication:latest
+          image: ghcr.io/abhiiiesh/port-to-shelf-authentication:latest
           ports: [{ containerPort: 3005 }]
           envFrom: [{ configMapRef: { name: platform-config } }]
 ---
@@ -77,7 +77,7 @@ spec:
     spec:
       containers:
         - name: vessel-tracking
-          image: ghcr.io/example/port-to-shelf/vessel-tracking:latest
+          image: ghcr.io/abhiiiesh/port-to-shelf-vessel-tracking:latest
           ports: [{ containerPort: 3001 }]
           envFrom: [{ configMapRef: { name: platform-config } }]
 ---
@@ -105,7 +105,7 @@ spec:
     spec:
       containers:
         - name: container-tracking
-          image: ghcr.io/example/port-to-shelf/container-tracking:latest
+          image: ghcr.io/abhiiiesh/port-to-shelf-container-tracking:latest
           ports: [{ containerPort: 3002 }]
           envFrom: [{ configMapRef: { name: platform-config } }]
 ---
@@ -133,7 +133,7 @@ spec:
     spec:
       containers:
         - name: ai-prediction
-          image: ghcr.io/example/port-to-shelf/ai-prediction:latest
+          image: ghcr.io/abhiiiesh/port-to-shelf-ai-prediction:latest
           ports: [{ containerPort: 3006 }]
           envFrom: [{ configMapRef: { name: platform-config } }]
 ---
@@ -161,7 +161,7 @@ spec:
     spec:
       containers:
         - name: slot-management
-          image: ghcr.io/example/port-to-shelf/slot-management:latest
+          image: ghcr.io/abhiiiesh/port-to-shelf-slot-management:latest
           ports: [{ containerPort: 3004 }]
           envFrom: [{ configMapRef: { name: platform-config } }]
 ---
@@ -189,7 +189,7 @@ spec:
     spec:
       containers:
         - name: auction
-          image: ghcr.io/example/port-to-shelf/auction:latest
+          image: ghcr.io/abhiiiesh/port-to-shelf-auction:latest
           ports: [{ containerPort: 3003 }]
           envFrom: [{ configMapRef: { name: platform-config } }]
 ---
@@ -217,7 +217,7 @@ spec:
     spec:
       containers:
         - name: ulip-integration
-          image: ghcr.io/example/port-to-shelf/ulip-integration:latest
+          image: ghcr.io/abhiiiesh/port-to-shelf-ulip-integration:latest
           ports: [{ containerPort: 3007 }]
           envFrom: [{ configMapRef: { name: platform-config } }]
 ---

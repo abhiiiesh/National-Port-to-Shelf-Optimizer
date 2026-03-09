@@ -6,12 +6,11 @@ Workflow file: `.github/workflows/ci-cd.yml`
 
 1. **test**
    - Install dependencies
-   - Run test suite
-   - Build all services
+   - Run strict final checkpoint (`npm run checkpoint:final`)
 
 2. **docker-build**
    - Build Docker images for each service using `Dockerfile.service`
-   - Tags include commit SHA
+   - Pushes `ghcr.io/<owner>/port-to-shelf-<service>:<sha>` on `main`
 
 3. **deploy-staging**
    - Validate Kubernetes manifests via `kubectl --dry-run=client`
