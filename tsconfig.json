@@ -14,6 +14,11 @@
     "declarationMap": true,
     "sourceMap": true,
     "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@port-to-shelf/shared-types": ["packages/shared-types/src"],
+      "@port-to-shelf/database": ["packages/database/src"]
+    },
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
