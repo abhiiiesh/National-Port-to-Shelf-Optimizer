@@ -1,0 +1,193 @@
+openapi: 3.0.3
+info:
+  title: National Port-to-Shelf Optimizer API
+  version: 1.0.0
+  description: |
+    API Gateway contract for the National Port-to-Shelf Optimizer.
+    All protected endpoints require a Bearer JWT.
+servers:
+  - url: http://localhost:3000
+    description: Local API Gateway
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error, message, code, timestamp, path]
+      properties:
+        error: { type: string }
+        message: { type: string }
+        code: { type: string }
+        timestamp: { type: string, format: date-time }
+        path: { type: string }
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Gateway health check
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+  /api/v1/vessels:
+    post:
+      summary: Register a vessel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              id: V1
+              imoNumber: '1234567'
+              name: MV Example
+      responses:
+        '201': { description: Vessel created }
+        '401':
+          description: Unauthorized
+          content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    get:
+      summary: List active vessels
+      responses:
+        '200': { description: Vessel list }
+  /api/v1/vessels/{id}:
+    get:
+      summary: Get vessel details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Vessel details }
+  /api/v1/vessels/{id}/position:
+    put:
+      summary: Update vessel position
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              latitude: 19.076
+              longitude: 72.8777
+              speed: 14
+              heading: 90
+      responses:
+        '200': { description: Position updated }
+  /api/v1/vessels/{id}/arrival:
+    post:
+      summary: Record vessel arrival
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Arrival recorded }
+  /api/v1/containers:
+    post:
+      summary: Create a container
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              id: ABCD1234567
+              ownerId: retailer-1
+              vesselId: V1
+              destinationWarehouse: INDEL
+      responses:
+        '201': { description: Container created }
+    get:
+      summary: Query containers
+      parameters:
+        - in: query
+          name: ownerId
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        '200': { description: Container list }
+  /api/v1/containers/{id}/transport-mode:
+    put:
+      summary: Update container transport mode
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Container mode updated }
+  /api/v1/containers/{id}/journey:
+    get:
+      summary: Get container journey
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Journey events }
+  /api/v1/containers/{id}/delivered:
+    post:
+      summary: Mark container as delivered
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Container delivered }
+  /api/v1/auctions:
+    get:
+      summary: List active auctions
+      responses:
+        '200': { description: Auction list }
+  /api/v1/auctions/{id}:
+    get:
+      summary: Get auction details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Auction details }
+  /api/v1/auctions/{id}/bids:
+    post:
+      summary: Submit bid
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              slotId: slot-1
+              containerId: ABCD1234567
+              bidAmount: 500
+      responses:
+        '201': { description: Bid submitted }
+  /api/v1/metrics/performance:
+    get:
+      summary: Get performance metrics report
+      responses:
+        '200': { description: Metrics payload }
+  /api/v1/reports:
+    get:
+      summary: Get generated reports
+      responses:
+        '200': { description: Reports payload }

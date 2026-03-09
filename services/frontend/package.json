@@ -1,0 +1,17 @@
+{
+  "name": "@port-to-shelf/frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend workspace for National Port-to-Shelf Optimizer",
+  "scripts": {
+    "lint": "eslint \"src/{app,features,shared,config}/**/*.ts\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "check:boundaries": "node ../../scripts/frontend/check-frontend-boundaries.js",
+    "check:contracts": "jest -c ../../jest.config.js --runInBand src/__tests__/contracts.test.ts",
+    "build": "npm run lint && npm run typecheck && npm run check:boundaries && tsc -p tsconfig.build.json",
+    "test": "npm run check:contracts && npm run check:app-shell && npm run check:design-system && npm run check:domain-ux",
+    "check:app-shell": "jest -c ../../jest.config.js --runInBand src/__tests__/app-shell.test.ts",
+    "check:design-system": "jest -c ../../jest.config.js --runInBand src/__tests__/design-system-accessibility.test.ts",
+    "check:domain-ux": "jest -c ../../jest.config.js --runInBand src/__tests__/domain-ux.test.ts"
+  }
+}
