@@ -886,14 +886,14 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test container at port → demurrage time low → flagged priority → prioritized in auction
     - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 32. Performance testing and optimization
+- [x] 32. Performance testing and optimization
   - [x] 32.1 Set up performance testing with k6
     - Create load test scenarios
     - Create stress test scenarios
     - Create spike test scenarios
     - _Requirements: All_
 
-  - [ ] 32.2 Run performance tests and optimize
+  - [x] 32.2 Run performance tests and optimize
     - Test API response times (target: p95 < 500ms)
     - Test throughput (target: 10,000 req/s)
     - Test ULIP event publishing latency (target: < 30s)

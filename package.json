@@ -20,7 +20,10 @@
     "typecheck": "tsc --noEmit",
     "perf:load": "k6 run tests/performance/k6/load-test.js",
     "perf:stress": "k6 run tests/performance/k6/stress-test.js",
-    "perf:spike": "k6 run tests/performance/k6/spike-test.js"
+    "perf:spike": "k6 run tests/performance/k6/spike-test.js",
+    "perf:throughput": "k6 run tests/performance/k6/throughput-test.js",
+    "perf:ulip": "k6 run tests/performance/k6/ulip-latency-test.js",
+    "perf:all": "npm run perf:load && npm run perf:stress && npm run perf:spike && npm run perf:throughput && npm run perf:ulip"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
