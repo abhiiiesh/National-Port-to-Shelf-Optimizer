@@ -140,3 +140,8 @@ npm run dev:down
 ## License
 
 Proprietary
+
+## Frontend rollout status
+
+Frontend implementation is being executed incrementally from the step-by-step plan.
+Phase 0 (Current Frontend Baseline) is now in place under `services/frontend`.

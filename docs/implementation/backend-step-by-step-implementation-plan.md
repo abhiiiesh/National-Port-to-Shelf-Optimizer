@@ -24,6 +24,16 @@ This plan defines a production-oriented execution path for evolving the current 
   - CI/CD via GitHub Actions
   - Deployment targets coordinated with Kubernetes environments
 
+### 0.1 Baseline implementation status (completed)
+
+The following baseline assets are now established in the repository:
+
+- Frontend workspace scaffold at `services/frontend`
+- Initial folder boundaries at `src/app`, `src/features`, `src/shared`, `src/config`
+- Frontend workspace package manifest and TypeScript configuration
+
+This closes the first execution step (Current Frontend Baseline) and prepares Phase 1 hardening tasks.
+
 ---
 
 ## 1) Foundation Hardening (UI Build, Types, Contracts)

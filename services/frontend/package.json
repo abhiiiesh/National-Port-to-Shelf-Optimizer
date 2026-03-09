@@ -1,0 +1,11 @@
+{
+  "name": "@port-to-shelf/frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend workspace for National Port-to-Shelf Optimizer",
+  "scripts": {
+    "dev": "echo \"Frontend baseline scaffold created. UI toolchain setup begins in next phase.\"",
+    "build": "echo \"Frontend baseline scaffold created. Build pipeline to be enabled in Phase 1.\"",
+    "test": "echo \"No frontend tests yet. Test setup begins in Phase 1.\""
+  }
+}
