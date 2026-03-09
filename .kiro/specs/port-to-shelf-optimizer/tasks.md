@@ -119,46 +119,46 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
   - Ask the user if questions arise
 
 
-- [ ] 8. Vessel Tracking Service
-  - [ ] 8.1 Implement Vessel entity and repository
+- [x] 8. Vessel Tracking Service
+  - [x] 8.1 Implement Vessel entity and repository
     - Create Vessel, Position, EstimatedArrival interfaces
     - Implement vessel CRUD operations
     - Create vessel status enum
     - _Requirements: 1.1, 1.4_
 
-  - [ ] 8.2 Implement vessel tracking methods
+  - [x] 8.2 Implement vessel tracking methods
     - Implement registerVessel() method
     - Implement updatePosition() method with position history
     - Implement recordArrival() method
     - Implement getVessel() and listActiveVessels() methods
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-  - [ ] 8.3 Integrate vessel tracking with event bus
+  - [x] 8.3 Integrate vessel tracking with event bus
     - Publish vessel.position.updated events
     - Publish vessel.arrived events
     - _Requirements: 1.2, 1.3_
 
-  - [ ] 8.4 Write property test for vessel tracking initialization
+  - [x] 8.4 Write property test for vessel tracking initialization
     - **Property 1: Vessel Tracking Initialization**
     - **Validates: Requirements 1.1**
 
-  - [ ] 8.5 Write property test for position update recalculation
+  - [x] 8.5 Write property test for position update recalculation
     - **Property 2: Position Update Triggers Recalculation**
     - **Validates: Requirements 1.2**
 
-  - [ ] 8.6 Write property test for arrival recording
+  - [x] 8.6 Write property test for arrival recording
     - **Property 3: Arrival Recording Completeness**
     - **Validates: Requirements 1.3**
 
-  - [ ] 8.7 Write property test for vessel registry
+  - [x] 8.7 Write property test for vessel registry
     - **Property 4: Vessel Registry Completeness**
     - **Validates: Requirements 1.4**
 
-  - [ ] 8.8 Write property test for vessel query response
+  - [x] 8.8 Write property test for vessel query response
     - **Property 5: Vessel Query Response Completeness**
     - **Validates: Requirements 1.5**
 
-  - [ ] 8.9 Write unit tests for vessel tracking edge cases
+  - [x] 8.9 Write unit tests for vessel tracking edge cases
     - Test vessel with empty manifest
     - Test duplicate IMO number rejection
     - Test invalid position coordinates
