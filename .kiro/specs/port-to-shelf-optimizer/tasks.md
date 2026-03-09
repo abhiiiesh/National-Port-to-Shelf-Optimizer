@@ -334,7 +334,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test capacity decrease affecting future slots
     - _Requirements: 4.4, 4.5, 7.4_
 
-- [ ] 13. Checkpoint - Prediction and slot management
+- [x] 13. Checkpoint - Prediction and slot management
   - Ensure predictions trigger slot creation
   - Verify capacity constraints are enforced
   - Ask the user if questions arise
