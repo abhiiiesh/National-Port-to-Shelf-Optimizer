@@ -3,13 +3,14 @@ const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '../../services/frontend/src');
-const layers = ['app', 'features', 'shared', 'config'];
+const layers = ['app', 'features', 'shared', 'config', 'security'];
 
 const allowed = {
-  app: new Set(['app', 'features', 'shared', 'config']),
-  features: new Set(['features', 'shared', 'config']),
+  app: new Set(['app', 'features', 'shared', 'config', 'security']),
+  features: new Set(['features', 'shared', 'config', 'security']),
   shared: new Set(['shared', 'config']),
   config: new Set(['config']),
+  security: new Set(['security', 'config', 'shared']),
 };
 
 const importRegex = /from\s+['"]([^'"]+)['"]/g;
@@ -41,6 +42,7 @@ const resolveLayerFromImport = (sourceLayer, importPath) => {
   if (importPath.startsWith('@features/')) return 'features';
   if (importPath.startsWith('@shared/')) return 'shared';
   if (importPath.startsWith('@config/')) return 'config';
+  if (importPath.startsWith('@security/')) return 'security';
 
   if (importPath.startsWith('.')) {
     const layerDir = path.resolve(root, sourceLayer);

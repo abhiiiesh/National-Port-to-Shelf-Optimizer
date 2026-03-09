@@ -160,6 +160,17 @@ Implemented domain UX baseline assets:
 
 ## 5) Frontend Security and Governance
 
+### 5.0 Implementation status (completed)
+
+Implemented frontend security/governance baseline assets:
+
+- Scope-based path authorization helper for frontend capability gating
+- Tenant ownership guard for tenant-aware data visibility checks
+- Session-refresh trigger helper for proactive token renewal windows
+- Sensitive-value masking and secure log redaction helpers
+- Audit message formatter for critical action traceability in UI workflows
+- Dedicated tests validating auth, tenant, masking/redaction, and audit behavior
+
 ### 5.1 Authentication and authorization
 1. Implement secure token handling and renewal flow.
 2. Map JWT claims/scopes to UI capabilities and hidden actions.

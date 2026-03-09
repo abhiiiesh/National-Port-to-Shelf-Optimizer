@@ -9,12 +9,27 @@
     "noEmit": true,
     "baseUrl": "./src",
     "paths": {
-      "@app/*": ["app/*"],
-      "@features/*": ["features/*"],
-      "@shared/*": ["shared/*"],
-      "@config/*": ["config/*"],
-      "@port-to-shelf/shared-types": ["../../../packages/shared-types/src/index.ts"]
+      "@app/*": [
+        "app/*"
+      ],
+      "@features/*": [
+        "features/*"
+      ],
+      "@shared/*": [
+        "shared/*"
+      ],
+      "@config/*": [
+        "config/*"
+      ],
+      "@port-to-shelf/shared-types": [
+        "../../../packages/shared-types/src/index.ts"
+      ],
+      "@security/*": [
+        "security/*"
+      ]
     }
   },
-  "include": ["src/**/*"]
+  "include": [
+    "src/**/*"
+  ]
 }
