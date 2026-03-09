@@ -16,8 +16,8 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@port-to-shelf/shared-types": ["packages/shared-types/src"],
-      "@port-to-shelf/database": ["packages/database/src"]
+      "@port-to-shelf/shared-types": ["packages/shared-types/dist"],
+      "@port-to-shelf/database": ["packages/database/dist"]
     },
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
