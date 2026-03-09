@@ -604,8 +604,8 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
   - Ask the user if questions arise
 
 
-- [ ] 21. ULIP Integration Service - Road Transport Integration
-  - [ ] 21.1 Implement road transport integration methods
+- [x] 21. ULIP Integration Service - Road Transport Integration
+  - [x] 21.1 Implement road transport integration methods
     - Implement queryTruckAvailability() method
     - Implement createTruckBooking() method
     - Process GPS truck location updates
@@ -613,31 +613,31 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Process delivery confirmations
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5_
 
-  - [ ] 21.2 Write property test for truck fleet availability access
+  - [x] 21.2 Write property test for truck fleet availability access
     - **Property 64: Truck Fleet Availability Access**
     - **Validates: Requirements 15.1**
 
-  - [ ] 21.3 Write property test for truck transport order creation
+  - [x] 21.3 Write property test for truck transport order creation
     - **Property 65: Truck Transport Order Creation**
     - **Validates: Requirements 15.2**
 
-  - [ ] 21.4 Write property test for GPS location update processing
+  - [x] 21.4 Write property test for GPS location update processing
     - **Property 66: GPS Truck Location Update Processing**
     - **Validates: Requirements 15.3**
 
-  - [ ] 21.5 Write property test for FASTag toll data access
+  - [x] 21.5 Write property test for FASTag toll data access
     - **Property 67: FASTag Toll Data Access**
     - **Validates: Requirements 15.4**
 
-  - [ ] 21.6 Write property test for delivery confirmation processing
+  - [x] 21.6 Write property test for delivery confirmation processing
     - **Property 68: Delivery Confirmation Processing**
     - **Validates: Requirements 15.5**
 
-  - [ ] 21.7 Write property test for road booking communication
+  - [x] 21.7 Write property test for road booking communication
     - **Property 31: Road Booking Communication**
     - **Validates: Requirements 7.2**
 
-  - [ ] 21.8 Write unit tests for road transport edge cases
+  - [x] 21.8 Write unit tests for road transport edge cases
     - Test truck booking with no available trucks
     - Test GPS update for unknown truck
     - Test delivery confirmation for wrong container
