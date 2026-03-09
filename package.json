@@ -8,7 +8,7 @@
     "services/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspace @port-to-shelf/shared-types && npm run build --workspace @port-to-shelf/database && npm run build --workspace @port-to-shelf/event-bus && npm run build --workspace @port-to-shelf/authentication && npm run build --workspace @port-to-shelf/vessel-tracking && npm run build --workspace @port-to-shelf/container-tracking && npm run build --workspace @port-to-shelf/ai-prediction && npm run build --workspace @port-to-shelf/slot-management && npm run build --workspace @port-to-shelf/auction && npm run build --workspace @port-to-shelf/performance-metrics && npm run build --workspace @port-to-shelf/ulip-integration && npm run build --workspace @port-to-shelf/api-gateway",
     "test": "jest",
     "test:unit": "jest",
     "test:property": "jest --testPathPattern=\\.property\\.test\\.ts$",

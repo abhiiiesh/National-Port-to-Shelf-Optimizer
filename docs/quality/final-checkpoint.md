@@ -1,29 +1,32 @@
 # Final Checkpoint (Task 35)
 
-This repository supports a final quality checkpoint command:
+Run the full checkpoint with:
 
 ```bash
 npm run checkpoint:final
 ```
 
-It executes:
+## What it verifies
 
-1. Unit + integration-compatible Jest suites (`npm run test:unit`)
-2. Property suites (`npm run test:property`)
-3. Smoke script validation (`bash -n scripts/smoke/smoke-test.sh`)
+1. **Unit + integration-compatible suites**
+   - `npm run test:unit`
+2. **Property suites**
+   - `npm run test:property`
+3. **Full workspace build (strict by default)**
+   - `npm run build`
+4. **Live smoke checks**
+   - Starts a mock auth validator on `localhost:3050`
+   - Starts API Gateway on `localhost:3000` with `AUTH_SERVICE_URL`
+   - Runs `scripts/smoke/smoke-test.sh` including authenticated checks
+5. **Optional DB-backed suites**
+   - `RUN_DB_TESTS=true npm run test:unit`
 
-## Database-backed test suites
+## Environment options
 
-Some tests require live PostgreSQL connectivity and are excluded by default to keep CI deterministic in minimal environments.
+- `RUN_DB_TESTS=true` to include authentication/database-heavy suites.
+- `ALLOW_BUILD_FAILURE=true` to continue checkpoint when build fails (local troubleshooting only).
 
-To include database-backed suites, run with:
+## Notes
 
-```bash
-RUN_DB_TESTS=true npm run test:unit
-```
-
-This enables:
-- `services/authentication/src/__tests__/auth.test.ts`
-- `services/authentication/src/__tests__/auth.property.test.ts`
-- `services/authentication/src/__tests__/auth-logging.property.test.ts`
-- `packages/database/src/__tests__/...`
+- In CI and release validation, keep `ALLOW_BUILD_FAILURE` unset (strict mode).
+- If service startup fails, inspect `/tmp/api-gateway-smoke.log` and `/tmp/auth-mock.log`.
