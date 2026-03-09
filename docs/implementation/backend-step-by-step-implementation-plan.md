@@ -234,6 +234,16 @@ Implemented frontend observability/operations baseline assets:
 
 ## 8) Deployment and Release Management
 
+### 8.0 Implementation status (completed)
+
+Implemented frontend deployment/release baseline assets:
+
+- Release metadata policy validation (version, commit SHA, build timestamp, source-map id)
+- Runtime environment readiness validation for dev/staging/prod endpoint hygiene
+- CI quality-gate evaluator for lint/type/unit/integration/build/smoke/perf checks
+- Synthetic post-deploy check evaluator for critical page health checks
+- Dedicated tests validating release policy, environment readiness, and gate evaluation
+
 ### 8.1 Build artifact policy
 1. Produce immutable versioned frontend artifacts.
 2. Ensure source map and release metadata mapping for error diagnostics.

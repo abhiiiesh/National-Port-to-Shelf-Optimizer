@@ -3,15 +3,16 @@ const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '../../services/frontend/src');
-const layers = ['app', 'features', 'shared', 'config', 'security', 'observability'];
+const layers = ['app', 'features', 'shared', 'config', 'security', 'observability', 'deployment'];
 
 const allowed = {
-  app: new Set(['app', 'features', 'shared', 'config', 'security', 'observability']),
-  features: new Set(['features', 'shared', 'config', 'security', 'observability']),
-  shared: new Set(['shared', 'config', 'observability']),
+  app: new Set(['app', 'features', 'shared', 'config', 'security', 'observability', 'deployment']),
+  features: new Set(['features', 'shared', 'config', 'security', 'observability', 'deployment']),
+  shared: new Set(['shared', 'config', 'observability', 'deployment']),
   config: new Set(['config']),
-  security: new Set(['security', 'config', 'shared', 'observability']),
-  observability: new Set(['observability', 'shared', 'config']),
+  security: new Set(['security', 'config', 'shared', 'observability', 'deployment']),
+  observability: new Set(['observability', 'shared', 'config', 'deployment']),
+  deployment: new Set(['deployment', 'config', 'shared', 'observability']),
 };
 
 const importRegex = /from\s+['"]([^'"]+)['"]/g;
@@ -45,6 +46,7 @@ const resolveLayerFromImport = (sourceLayer, importPath) => {
   if (importPath.startsWith('@config/')) return 'config';
   if (importPath.startsWith('@security/')) return 'security';
   if (importPath.startsWith('@observability/')) return 'observability';
+  if (importPath.startsWith('@deployment/')) return 'deployment';
 
   if (importPath.startsWith('.')) {
     const layerDir = path.resolve(root, sourceLayer);
