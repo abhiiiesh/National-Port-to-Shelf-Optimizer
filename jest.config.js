@@ -21,6 +21,16 @@ module.exports = {
   },
   moduleNameMapper: {
     '^@port-to-shelf/shared-types$': '<rootDir>/packages/shared-types/src',
+    '^@port-to-shelf/database$': '<rootDir>/packages/database/src',
+  },
+  globals: {
+    'ts-jest': {
+      diagnostics: false,
+      tsconfig: {
+        noUnusedLocals: false,
+        noUnusedParameters: false,
+      },
+    },
   },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
 };
