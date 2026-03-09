@@ -598,7 +598,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test rail route query with no routes
     - _Requirements: 14.1, 14.2, 14.4_
 
-- [ ] 20. Checkpoint - ULIP integration foundation
+- [x] 20. Checkpoint - ULIP integration foundation
   - Ensure ULIP authentication works
   - Verify event publishing and subscription
   - Ask the user if questions arise
