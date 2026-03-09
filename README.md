@@ -112,6 +112,16 @@ The project uses a dual testing approach:
 
 All property tests reference their corresponding design document properties and validate specific requirements.
 
+
+## Documentation
+
+- OpenAPI spec: `docs/api/openapi.yaml`
+- Authentication flow: `docs/api/authentication-flow.md`
+- API examples: `docs/api/examples.md`
+- Kubernetes deployment: `docs/deployment/k8s/README.md`
+- CI/CD pipeline notes: `docs/deployment/ci-cd.md`
+- Final checkpoint runbook: `docs/quality/final-checkpoint.md`
+
 ## Infrastructure
 
 ### Docker Compose Services
@@ -130,3 +140,8 @@ npm run dev:down
 ## License
 
 Proprietary
+
+## Frontend rollout status
+
+Frontend implementation is being executed incrementally from the step-by-step plan.
+Phase 0 (Current Frontend Baseline) is now in place under `services/frontend`.
