@@ -230,7 +230,7 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test container with no journey events
     - _Requirements: 2.1, 17.1, 17.2_
 
-- [ ] 10. Checkpoint - Tracking services
+- [x] 10. Checkpoint - Tracking services
   - Ensure vessels and containers can be tracked
   - Verify events are published correctly
   - Ask the user if questions arise
