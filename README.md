@@ -120,6 +120,7 @@ All property tests reference their corresponding design document properties and 
 - API examples: `docs/api/examples.md`
 - Kubernetes deployment: `docs/deployment/k8s/README.md`
 - CI/CD pipeline notes: `docs/deployment/ci-cd.md`
+- Final checkpoint runbook: `docs/quality/final-checkpoint.md`
 
 ## Infrastructure
 
