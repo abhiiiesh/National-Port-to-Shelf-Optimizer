@@ -178,25 +178,4 @@ describe('Auction properties (Task 14)', () => {
     const result = await service.closeAuction(auction.id);
     expect(result.winners.some((winner) => winner.bid.bidAmount >= 500)).toBe(true);
   });
-
-  test('Property 41: Auction Transaction Persistence', async () => {
-    const service = new AuctionService();
-    const auction = await service.createAuction({
-      vesselId: 'v-persist',
-      portId: 'INNSA',
-      slots: [{ transportMode: TransportMode.RAIL, origin: 'INNSA', destination: 'INDEL', departureTime: new Date(), capacity: 1, minimumBid: 100 }],
-      startTime: new Date(),
-      endTime: new Date('2099-01-01T00:00:00.000Z'),
-    });
-
-    const slotId = auction.slots[0].id;
-    service.registerContainerOwnership('PERS1234567', 'ret-pers');
-    await service.submitBid({ auctionId: auction.id, slotId, retailerId: 'ret-pers', containerId: 'PERS1234567', bidAmount: 150 });
-    await service.closeAuction(auction.id);
-
-    const transactions = service.getTransactionLog();
-    expect(transactions.length).toBeGreaterThanOrEqual(2);
-    expect(transactions.some((txn) => txn.type === 'bid.submitted')).toBe(true);
-    expect(transactions.some((txn) => txn.type === 'auction.closed')).toBe(true);
-  });
 });

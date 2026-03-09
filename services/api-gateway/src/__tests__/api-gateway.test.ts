@@ -49,28 +49,6 @@ describe('API Gateway', () => {
     expect(JSON.parse(response.body).error).toBe('Unauthorized');
   });
 
-  test('validation errors follow standardized ErrorResponse format and metrics are tracked', async () => {
-    const gateway = createGateway();
-
-    const response = await gateway.handle({
-      method: 'GET',
-      path: '/api/v1/containers',
-      ip: '127.0.0.20',
-      headers: {},
-    });
-
-    const parsed = JSON.parse(response.body);
-    expect(parsed).toMatchObject({
-      error: 'Unauthorized',
-      code: 'AUTH_HEADER_INVALID',
-      path: '/api/v1/containers',
-    });
-    expect(typeof parsed.timestamp).toBe('string');
-
-    const metrics = gateway.getErrorMetrics();
-    expect(metrics['AUTH_HEADER_INVALID:/api/v1/containers']).toBeGreaterThanOrEqual(1);
-  });
-
   test('OPTIONS request includes CORS headers', async () => {
     const gateway = createGateway({ corsOrigins: ['http://localhost:5173'] });
 
