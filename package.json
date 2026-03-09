@@ -17,7 +17,10 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
     "dev": "docker-compose up -d",
     "dev:down": "docker-compose down",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "perf:load": "k6 run tests/performance/k6/load-test.js",
+    "perf:stress": "k6 run tests/performance/k6/stress-test.js",
+    "perf:spike": "k6 run tests/performance/k6/spike-test.js"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
