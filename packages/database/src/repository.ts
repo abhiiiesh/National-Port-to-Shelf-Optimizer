@@ -1,5 +1,5 @@
-import { PoolClient, QueryResult } from 'pg';
-import { query, getClient, withTransaction } from './pool';
+import { PoolClient, QueryResult, QueryResultRow } from 'pg';
+import { query, withTransaction } from './pool';
 
 /**
  * Base repository interface for CRUD operations
@@ -132,7 +132,7 @@ export abstract class BaseRepository<T> implements IRepository<T> {
   /**
    * Execute a custom query
    */
-  protected async executeQuery<R = any>(
+  protected async executeQuery<R extends QueryResultRow = any>(
     text: string,
     params?: any[]
   ): Promise<QueryResult<R>> {
