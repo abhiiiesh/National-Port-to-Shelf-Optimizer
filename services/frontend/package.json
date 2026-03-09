@@ -1,0 +1,23 @@
+{
+  "name": "@port-to-shelf/frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend workspace for National Port-to-Shelf Optimizer",
+  "scripts": {
+    "lint": "eslint \"src/{app,features,shared,config,security,observability,deployment}/**/*.ts\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "check:boundaries": "node ../../scripts/frontend/check-frontend-boundaries.js",
+    "check:contracts": "jest -c ../../jest.config.js --runInBand src/__tests__/contracts.test.ts",
+    "build": "npm run lint && npm run typecheck && npm run check:boundaries && tsc -p tsconfig.build.json",
+    "test": "npm run check:contracts && npm run check:app-shell && npm run check:design-system && npm run check:domain-ux && npm run check:security && npm run check:integration && npm run check:resilience && npm run check:observability && npm run check:deployment && npm run check:readiness",
+    "check:app-shell": "jest -c ../../jest.config.js --runInBand src/__tests__/app-shell.test.ts",
+    "check:design-system": "jest -c ../../jest.config.js --runInBand src/__tests__/design-system-accessibility.test.ts",
+    "check:domain-ux": "jest -c ../../jest.config.js --runInBand src/__tests__/domain-ux.test.ts",
+    "check:security": "jest -c ../../jest.config.js --runInBand src/__tests__/security-governance.test.ts",
+    "check:integration": "jest -c ../../jest.config.js --runInBand src/__tests__/integration-api-client.test.ts",
+    "check:resilience": "jest -c ../../jest.config.js --runInBand src/__tests__/resilience-nonfunctional.test.ts",
+    "check:observability": "jest -c ../../jest.config.js --runInBand src/__tests__/observability-operations.test.ts",
+    "check:deployment": "jest -c ../../jest.config.js --runInBand src/__tests__/deployment-release.test.ts",
+    "check:readiness": "jest -c ../../jest.config.js --runInBand src/__tests__/production-readiness.test.ts"
+  }
+}
