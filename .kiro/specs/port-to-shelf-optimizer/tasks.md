@@ -94,20 +94,20 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test CORS headers
     - _Requirements: 10.1_
 
-- [ ] 6. Event Bus implementation
-  - [ ] 6.1 Set up Kafka event bus
+- [x] 6. Event Bus implementation
+  - [x] 6.1 Set up Kafka event bus
     - Configure Kafka topics for all event types
     - Implement event publisher with idempotency
     - Implement event subscriber with consumer groups
     - Create event schema registry
     - _Requirements: 9.1, 9.2_
 
-  - [ ] 6.2 Create event type definitions
+  - [x] 6.2 Create event type definitions
     - Define all event types (vessel.position.updated, container.mode.changed, etc.)
     - Implement event serialization/deserialization
     - _Requirements: 9.1, 9.2_
 
-  - [ ] 6.3 Write unit tests for event bus
+  - [x] 6.3 Write unit tests for event bus
     - Test event publishing
     - Test event subscription
     - Test idempotency with duplicate event IDs
