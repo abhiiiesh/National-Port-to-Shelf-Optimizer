@@ -643,8 +643,8 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Test delivery confirmation for wrong container
     - _Requirements: 15.1, 15.2, 15.5_
 
-- [ ] 22. ULIP Integration Service - Customs Integration
-  - [ ] 22.1 Implement customs integration methods
+- [x] 22. ULIP Integration Service - Customs Integration
+  - [x] 22.1 Implement customs integration methods
     - Implement getCustomsStatus() method
     - Implement submitCustomsDocuments() method
     - Process customs clearance notifications
@@ -652,27 +652,27 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
     - Process regulatory hold alerts
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5_
 
-  - [ ] 22.2 Write property test for customs status query
+  - [x] 22.2 Write property test for customs status query
     - **Property 69: Customs Status Query**
     - **Validates: Requirements 16.1**
 
-  - [ ] 22.3 Write property test for customs clearance notification
+  - [x] 22.3 Write property test for customs clearance notification
     - **Property 70: Customs Clearance Notification Processing**
     - **Validates: Requirements 16.2**
 
-  - [ ] 22.4 Write property test for customs document submission
+  - [x] 22.4 Write property test for customs document submission
     - **Property 71: Customs Document Submission**
     - **Validates: Requirements 16.3**
 
-  - [ ] 22.5 Write property test for ICEGATE data access
+  - [x] 22.5 Write property test for ICEGATE data access
     - **Property 72: ICEGATE Data Access**
     - **Validates: Requirements 16.4**
 
-  - [ ] 22.6 Write property test for regulatory hold alert
+  - [x] 22.6 Write property test for regulatory hold alert
     - **Property 73: Regulatory Hold Alert Processing**
     - **Validates: Requirements 16.5**
 
-  - [ ] 22.7 Write unit tests for customs integration edge cases
+  - [x] 22.7 Write unit tests for customs integration edge cases
     - Test customs status for unknown container
     - Test document submission failure
     - Test regulatory hold processing
