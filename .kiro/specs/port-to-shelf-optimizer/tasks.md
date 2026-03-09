@@ -340,73 +340,73 @@ This implementation plan breaks down the Port-to-Shelf Optimizer into discrete, 
   - Ask the user if questions arise
 
 
-- [ ] 14. Auction Service
-  - [ ] 14.1 Implement auction data models
+- [x] 14. Auction Service
+  - [x] 14.1 Implement auction data models
     - Create Auction, Bid, BidSubmission, AuctionResult, BidWinner interfaces
     - Create auction and bid repositories
     - Create auction and bid status enums
     - _Requirements: 4.2, 4.3, 5.2_
 
-  - [ ] 14.2 Implement auction service methods
+  - [x] 14.2 Implement auction service methods
     - Implement createAuction() method
     - Implement submitBid() method with validation
     - Implement closeAuction() method with winner selection
     - Implement getAuction() and listActiveAuctions() methods
     - _Requirements: 4.2, 4.3, 5.1, 5.2, 5.3_
 
-  - [ ] 14.3 Implement bid validation
+  - [x] 14.3 Implement bid validation
     - Validate bid amount against minimum bid
     - Validate container ownership
     - Prevent cross-retailer bidding
     - _Requirements: 5.2, 5.4_
 
-  - [ ] 14.4 Implement auction closing logic
+  - [x] 14.4 Implement auction closing logic
     - Select highest bidder for each slot
     - Update bid statuses (ACCEPTED, REJECTED, OUTBID)
     - Create booking confirmations for winners
     - Send notifications to all bidders
     - _Requirements: 4.3, 5.3, 5.5_
 
-  - [ ] 14.5 Integrate auction service with event bus
+  - [x] 14.5 Integrate auction service with event bus
     - Subscribe to slot creation events
     - Publish auction.created events
     - Publish auction.closed events
     - Publish bid.submitted events
     - _Requirements: 4.2, 4.3, 5.5_
 
-  - [ ] 14.6 Write property test for auction initiation
+  - [x] 14.6 Write property test for auction initiation
     - **Property 16: Auction Initiation on Slot Creation**
     - **Validates: Requirements 4.2**
 
-  - [ ] 14.7 Write property test for highest bidder wins
+  - [x] 14.7 Write property test for highest bidder wins
     - **Property 17: Highest Bidder Wins**
     - **Validates: Requirements 4.3**
 
-  - [ ] 14.8 Write property test for auction filtering by destination
+  - [x] 14.8 Write property test for auction filtering by destination
     - **Property 20: Auction Filtering by Destination**
     - **Validates: Requirements 5.1**
 
-  - [ ] 14.9 Write property test for bid validation
+  - [x] 14.9 Write property test for bid validation
     - **Property 21: Bid Validation**
     - **Validates: Requirements 5.2**
 
-  - [ ] 14.10 Write property test for accepted bid confirmation
+  - [x] 14.10 Write property test for accepted bid confirmation
     - **Property 22: Accepted Bid Confirmation Completeness**
     - **Validates: Requirements 5.3**
 
-  - [ ] 14.11 Write property test for container ownership enforcement
+  - [x] 14.11 Write property test for container ownership enforcement
     - **Property 23: Container Ownership Enforcement**
     - **Validates: Requirements 5.4**
 
-  - [ ] 14.12 Write property test for auction end notification
+  - [x] 14.12 Write property test for auction end notification
     - **Property 24: Auction End Notification**
     - **Validates: Requirements 5.5**
 
-  - [ ] 14.13 Write property test for priority container slot preference
+  - [x] 14.13 Write property test for priority container slot preference
     - **Property 27: Priority Container Slot Preference**
     - **Validates: Requirements 6.3**
 
-  - [ ] 14.14 Write unit tests for auction edge cases
+  - [x] 14.14 Write unit tests for auction edge cases
     - Test auction with no bids
     - Test auction with single bid
     - Test bid on expired auction
