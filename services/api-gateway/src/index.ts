@@ -24,14 +24,6 @@ export interface GatewayResponse {
   body: string;
 }
 
-export interface ErrorResponse {
-  error: string;
-  message: string;
-  code: string;
-  timestamp: string;
-  path: string;
-}
-
 export type TokenValidator = (token: string) => Promise<TokenValidation>;
 export type RouteProxy = (targetBaseUrl: string, req: RequestContext) => Promise<GatewayResponse>;
 
@@ -97,42 +89,8 @@ export function createGateway(config: Partial<GatewayConfig> = {}, validator?: T
   const validateToken = validator || createTokenValidator(cfg.authServiceUrl);
   const proxyToService = proxy || createProxy();
   const rateState = new Map<string, { count: number; resetAt: number }>();
-  const errorMetrics = new Map<string, number>();
-
-  const logError = (error: ErrorResponse): void => {
-    const key = `${error.code}:${error.path}`;
-    errorMetrics.set(key, (errorMetrics.get(key) ?? 0) + 1);
-    console.error(JSON.stringify({ level: 'error', ...error }));
-  };
-
-  const makeErrorResponse = (
-    status: number,
-    req: RequestContext,
-    baseHeaders: Record<string, string>,
-    error: string,
-    message: string,
-    code: string
-  ): GatewayResponse => {
-    const body: ErrorResponse = {
-      error,
-      message,
-      code,
-      timestamp: new Date().toISOString(),
-      path: req.path,
-    };
-    logError(body);
-    return {
-      status,
-      headers: { ...baseHeaders, 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-    };
-  };
 
   return {
-    getErrorMetrics(): Record<string, number> {
-      return Object.fromEntries(errorMetrics.entries());
-    },
-
     async handle(req: RequestContext): Promise<GatewayResponse> {
       const origin = req.headers.origin;
       const corsOrigin = cfg.corsOrigins.includes('*')
@@ -156,7 +114,11 @@ export function createGateway(config: Partial<GatewayConfig> = {}, validator?: T
       if (!rate || now > rate.resetAt) {
         rateState.set(req.ip, { count: 1, resetAt: now + cfg.rateLimitWindowMs });
       } else if (rate.count >= cfg.rateLimitMaxRequests) {
-        return makeErrorResponse(429, req, baseHeaders, 'Too Many Requests', 'Rate limit exceeded', 'RATE_LIMIT_EXCEEDED');
+        return {
+          status: 429,
+          headers: { ...baseHeaders, 'content-type': 'application/json' },
+          body: JSON.stringify({ error: 'Too Many Requests', message: 'Rate limit exceeded' }),
+        };
       } else {
         rate.count += 1;
       }
@@ -171,18 +133,30 @@ export function createGateway(config: Partial<GatewayConfig> = {}, validator?: T
 
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return makeErrorResponse(401, req, baseHeaders, 'Unauthorized', 'Missing or invalid authorization header', 'AUTH_HEADER_INVALID');
+        return {
+          status: 401,
+          headers: { ...baseHeaders, 'content-type': 'application/json' },
+          body: JSON.stringify({ error: 'Unauthorized', message: 'Missing or invalid authorization header' }),
+        };
       }
 
       const token = authHeader.slice('Bearer '.length).trim();
       const auth = await validateToken(token);
       if (!auth.valid) {
-        return makeErrorResponse(401, req, baseHeaders, 'Unauthorized', 'Invalid token', 'TOKEN_INVALID');
+        return {
+          status: 401,
+          headers: { ...baseHeaders, 'content-type': 'application/json' },
+          body: JSON.stringify({ error: 'Unauthorized', message: 'Invalid token' }),
+        };
       }
 
       const route = Object.entries(cfg.serviceRoutes).find(([prefix]) => req.path.startsWith(prefix));
       if (!route) {
-        return makeErrorResponse(404, req, baseHeaders, 'Not Found', 'No route configured for request path', 'ROUTE_NOT_FOUND');
+        return {
+          status: 404,
+          headers: { ...baseHeaders, 'content-type': 'application/json' },
+          body: JSON.stringify({ error: 'Not Found', message: 'No route configured for request path' }),
+        };
       }
 
       const [prefix, target] = route;
