@@ -9,33 +9,16 @@
     "noEmit": true,
     "baseUrl": "./src",
     "paths": {
-      "@app/*": [
-        "app/*"
-      ],
-      "@features/*": [
-        "features/*"
-      ],
-      "@shared/*": [
-        "shared/*"
-      ],
-      "@config/*": [
-        "config/*"
-      ],
-      "@port-to-shelf/shared-types": [
-        "../../../packages/shared-types/src/index.ts"
-      ],
-      "@security/*": [
-        "security/*"
-      ],
-      "@observability/*": [
-        "observability/*"
-      ],
-      "@deployment/*": [
-        "deployment/*"
-      ]
-    }
+      "@app/*": ["app/*"],
+      "@features/*": ["features/*"],
+      "@shared/*": ["shared/*"],
+      "@config/*": ["config/*"],
+      "@port-to-shelf/shared-types": ["../../../packages/shared-types/src/index.ts"],
+      "@security/*": ["security/*"],
+      "@observability/*": ["observability/*"],
+      "@deployment/*": ["deployment/*"]
+    },
+    "lib": ["ES2020", "DOM", "DOM.Iterable"]
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src/**/*"]
 }
