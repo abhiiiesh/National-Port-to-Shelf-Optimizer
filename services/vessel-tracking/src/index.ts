@@ -30,6 +30,8 @@ function parsePosition(input: unknown): Position {
     latitude: Number(body.latitude ?? 0),
     longitude: Number(body.longitude ?? 0),
     timestamp: body.timestamp ? new Date(String(body.timestamp)) : new Date(),
+    speed: Number(body.speed ?? 0),
+    heading: Number(body.heading ?? 0),
   };
 }
 

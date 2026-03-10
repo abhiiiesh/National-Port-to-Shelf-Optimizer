@@ -35,7 +35,7 @@ function toLocation(body: Record<string, unknown>): Location {
     id: String(body.id || 'UNKNOWN'),
     name: String(body.name || 'Unknown'),
     type: (body.type as LocationType) || LocationType.PORT,
-    position: {
+    coordinates: {
       latitude: Number((body.position as Record<string, unknown> | undefined)?.latitude ?? 0),
       longitude: Number((body.position as Record<string, unknown> | undefined)?.longitude ?? 0),
       timestamp: new Date(
@@ -44,6 +44,8 @@ function toLocation(body: Record<string, unknown>): Location {
             new Date().toISOString()
         )
       ),
+      speed: Number((body.position as Record<string, unknown> | undefined)?.speed ?? 0),
+      heading: Number((body.position as Record<string, unknown> | undefined)?.heading ?? 0),
     },
   };
 }
@@ -75,8 +77,7 @@ export function createContainerTrackingServer(
         const query: ContainerQuery = {
           ownerId: url.searchParams.get('ownerId') || undefined,
           status: (url.searchParams.get('status') as ContainerQuery['status']) || undefined,
-          mode: (url.searchParams.get('mode') as TransportMode) || undefined,
-          highPriorityOnly: url.searchParams.get('highPriorityOnly') === 'true',
+          currentMode: (url.searchParams.get('mode') as TransportMode) || undefined,
         };
         json(res, 200, service.queryContainers(query));
         return;
