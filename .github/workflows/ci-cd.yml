@@ -161,6 +161,20 @@ jobs:
           kubectl apply -f docs/deployment/k8s/base/ingress.yaml
           kubectl apply -f docs/deployment/k8s/hpa/hpa.yaml
 
+      - name: Pin deployments to immutable image tags
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          namespace="port-to-shelf"
+
+          for service in api-gateway authentication vessel-tracking container-tracking ai-prediction slot-management auction ulip-integration; do
+            image="ghcr.io/${owner}/port-to-shelf-${service}:${{ github.sha }}"
+            echo "Setting deployment/${service} image to ${image}"
+            kubectl -n "$namespace" set image "deployment/${service}" "${service}=${image}"
+          done
+
       - name: Verify rollout status
         shell: bash
         run: |
