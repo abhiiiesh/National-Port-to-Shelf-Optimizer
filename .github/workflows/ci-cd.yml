@@ -43,6 +43,13 @@ jobs:
             path: services/ulip-integration
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Preflight TypeScript build for target workspace
+        run: npm run build --workspace @port-to-shelf/shared-types && npm run build --workspace @port-to-shelf/database && npm run build --workspace=${{ matrix.path }}
       - uses: docker/setup-buildx-action@v3
       - name: Login to GHCR
         if: github.ref == 'refs/heads/main'
@@ -67,9 +74,73 @@ jobs:
     needs: docker-build
     if: github.ref == 'refs/heads/main'
     environment: staging
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      STAGING_KUBECONFIG_B64: ${{ secrets.STAGING_KUBECONFIG_B64 }}
     steps:
       - uses: actions/checkout@v4
-      - uses: azure/setup-kubectl@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Install AWS CLI v2
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v unzip >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y unzip
+          fi
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip -q awscliv2.zip
+          sudo ./aws/install --update
+          aws --version
+
+      - name: Configure Kubernetes authentication
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          aws_auth_ok=false
+
+          if [[ -n "${AWS_ACCESS_KEY_ID:-}" && -n "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
+            echo "Using AWS credential path"
+            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+            aws configure set region "${{ vars.AWS_REGION }}"
+            aws sts get-caller-identity
+            aws eks update-kubeconfig --region "${{ vars.AWS_REGION }}" --name "${{ vars.EKS_CLUSTER_NAME }}"
+
+            if kubectl get nodes >/dev/null 2>&1; then
+              aws_auth_ok=true
+              echo "AWS-based kubectl authentication succeeded"
+            else
+              echo "AWS credentials are valid, but Kubernetes API authentication/authorization failed."
+              echo "This usually means EKS access entry / aws-auth RBAC mapping is missing for the IAM principal."
+            fi
+          fi
+
+          if [[ "$aws_auth_ok" != "true" ]]; then
+            if [[ -n "${STAGING_KUBECONFIG_B64:-}" ]]; then
+              echo "Falling back to kubeconfig secret path"
+              echo "$STAGING_KUBECONFIG_B64" | base64 -d > kubeconfig
+              echo "KUBECONFIG=$PWD/kubeconfig" >> "$GITHUB_ENV"
+              export KUBECONFIG=$PWD/kubeconfig
+              kubectl get nodes
+            else
+              echo "No usable Kubernetes auth path configured."
+              echo "Provide one of:"
+              echo "1) IAM principal with EKS access entry + RBAC mapping for AWS credentials path"
+              echo "2) STAGING_KUBECONFIG_B64 fallback secret"
+              echo "Suggested EKS access fix (run once with admin principal):"
+              echo "aws eks create-access-entry --cluster-name ${{ vars.EKS_CLUSTER_NAME }} --principal-arn <IAM_PRINCIPAL_ARN> --type STANDARD --region ${{ vars.AWS_REGION }}"
+              echo "aws eks associate-access-policy --cluster-name ${{ vars.EKS_CLUSTER_NAME }} --principal-arn <IAM_PRINCIPAL_ARN> --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster --region ${{ vars.AWS_REGION }}"
+              exit 1
+            fi
+          fi
+
       - name: Validate manifests
         run: |
           kubectl apply --dry-run=client -f docs/deployment/k8s/base/namespace.yaml
@@ -77,16 +148,33 @@ jobs:
           kubectl apply --dry-run=client -f docs/deployment/k8s/base/services.yaml
           kubectl apply --dry-run=client -f docs/deployment/k8s/base/ingress.yaml
           kubectl apply --dry-run=client -f docs/deployment/k8s/hpa/hpa.yaml
-      - name: Apply manifests to staging
-        if: ${{ secrets.STAGING_KUBECONFIG_B64 != '' }}
+
+      - name: Deploy application manifests
         run: |
-          echo "${{ secrets.STAGING_KUBECONFIG_B64 }}" | base64 -d > kubeconfig
-          export KUBECONFIG=$PWD/kubeconfig
           kubectl apply -f docs/deployment/k8s/base/namespace.yaml
           kubectl apply -f docs/deployment/k8s/base/configmap.yaml
           kubectl apply -f docs/deployment/k8s/base/services.yaml
           kubectl apply -f docs/deployment/k8s/base/ingress.yaml
           kubectl apply -f docs/deployment/k8s/hpa/hpa.yaml
+
+      - name: Verify rollout status
+        run: |
+          kubectl -n port-to-shelf rollout status deployment/api-gateway --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/authentication --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/vessel-tracking --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/container-tracking --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/ai-prediction --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/slot-management --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/auction --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/ulip-integration --timeout=180s
+
+      - name: Capture staging endpoint hints
+        run: |
+          echo "Ingress resources:"
+          kubectl -n port-to-shelf get ingress -o wide || true
+          echo "API Gateway service:"
+          kubectl -n port-to-shelf get svc api-gateway -o wide || true
+          echo "Use the resulting EXTERNAL-IP/hostname to set STAGING_BASE_URL repository variable."
 
   smoke-tests:
     runs-on: ubuntu-latest
