@@ -360,13 +360,21 @@ jobs:
           }
           trap cleanup EXIT
 
+          if [[ -n "$smoke_url" ]]; then
+            echo "Checking reachability of resolved smoke URL: $smoke_url"
+            if ! curl --connect-timeout 5 --max-time 15 -fsS "$smoke_url/health" >/dev/null 2>&1; then
+              echo "Resolved smoke URL is not reachable yet; will try port-forward fallback"
+              smoke_url=""
+            fi
+          fi
+
           if [[ -z "$smoke_url" ]]; then
-            echo "Smoke base URL not resolved from deploy job; using kubectl port-forward fallback"
+            echo "Smoke base URL not resolved/reachable; using kubectl port-forward fallback"
             kubectl -n port-to-shelf port-forward svc/api-gateway 3000:3000 >/tmp/port-forward.log 2>&1 &
             pf_pid=$!
 
-            for _ in {1..20}; do
-              if curl -fsS http://127.0.0.1:3000/health >/dev/null 2>&1; then
+            for _ in {1..30}; do
+              if curl --connect-timeout 2 --max-time 5 -fsS http://127.0.0.1:3000/health >/dev/null 2>&1; then
                 smoke_url="http://127.0.0.1:3000"
                 break
               fi
@@ -381,4 +389,5 @@ jobs:
           fi
 
           export SMOKE_BASE_URL="$smoke_url"
+          export SMOKE_CURL_TIMEOUT_SECONDS=15
           bash scripts/smoke/smoke-test.sh
