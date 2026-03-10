@@ -49,7 +49,7 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - name: Preflight TypeScript build for target workspace
-        run: npm run build --workspace=${{ matrix.path }}
+        run: npm run build --workspace @port-to-shelf/shared-types && npm run build --workspace @port-to-shelf/database && npm run build --workspace=${{ matrix.path }}
       - uses: docker/setup-buildx-action@v3
       - name: Login to GHCR
         if: github.ref == 'refs/heads/main'
