@@ -1,5 +1,9 @@
 name: CI/CD Pipeline
 
+permissions: 
+  contents: read 
+  packages: write
+
 on:
   push:
     branches: [main, work]
@@ -83,33 +87,30 @@ jobs:
           sudo apt-get install -y awscli
           aws --version
 
-      - name: Configure AWS credentials
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Connect kubectl to EKS cluster
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
+      - name: Configure Kubernetes authentication
+        shell: bash
         run: |
-          aws eks update-kubeconfig --region "${{ vars.AWS_REGION }}" --name "${{ vars.EKS_CLUSTER_NAME }}"
-          kubectl get nodes
+          set -euo pipefail
 
-      - name: Fallback kubeconfig (base64 secret)
-        if: ${{ (secrets.AWS_ACCESS_KEY_ID == '' || secrets.AWS_SECRET_ACCESS_KEY == '') && secrets.STAGING_KUBECONFIG_B64 != '' }}
-        run: |
-          echo "${{ secrets.STAGING_KUBECONFIG_B64 }}" | base64 -d > kubeconfig
-          echo "KUBECONFIG=$PWD/kubeconfig" >> "$GITHUB_ENV"
-          kubectl get nodes
-
-      - name: Guardrail - ensure kube auth configured
-        if: ${{ (secrets.AWS_ACCESS_KEY_ID == '' || secrets.AWS_SECRET_ACCESS_KEY == '') && secrets.STAGING_KUBECONFIG_B64 == '' }}
-        run: |
-          echo "No Kubernetes auth path configured."
-          echo "Set AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY (preferred), or STAGING_KUBECONFIG_B64 (fallback)."
-          exit 1
+          if [[ -n "${AWS_ACCESS_KEY_ID:-}" && -n "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
+            echo "Using AWS credential path"
+            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+            aws configure set region "${{ vars.AWS_REGION }}"
+            aws sts get-caller-identity
+            aws eks update-kubeconfig --region "${{ vars.AWS_REGION }}" --name "${{ vars.EKS_CLUSTER_NAME }}"
+            kubectl get nodes
+          elif [[ -n "${STAGING_KUBECONFIG_B64:-}" ]]; then
+            echo "Using kubeconfig fallback path"
+            echo "$STAGING_KUBECONFIG_B64" | base64 -d > kubeconfig
+            echo "KUBECONFIG=$PWD/kubeconfig" >> "$GITHUB_ENV"
+            export KUBECONFIG=$PWD/kubeconfig
+            kubectl get nodes
+          else
+            echo "No Kubernetes auth path configured."
+            echo "Set AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY (preferred), or STAGING_KUBECONFIG_B64 (fallback)."
+            exit 1
+          fi
 
       - name: Validate manifests
         run: |
