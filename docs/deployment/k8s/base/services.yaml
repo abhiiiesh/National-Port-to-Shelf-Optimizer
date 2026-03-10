@@ -29,6 +29,7 @@ metadata:
   name: api-gateway
   namespace: port-to-shelf
 spec:
+  type: LoadBalancer
   selector: { app: api-gateway }
   ports:
     - port: 3000

@@ -4,6 +4,12 @@ set -euo pipefail
 BASE_URL="${SMOKE_BASE_URL:-http://localhost:3000}"
 TOKEN="${SMOKE_AUTH_TOKEN:-}"
 
+if [[ -z "${SMOKE_BASE_URL:-}" && "${GITHUB_ACTIONS:-false}" == "true" ]]; then
+  echo "SMOKE_BASE_URL is empty in CI. Refusing localhost fallback."
+  echo "Set STAGING_BASE_URL repository variable or ensure deploy job resolves external endpoint."
+  exit 1
+fi
+
 echo "Running smoke tests against ${BASE_URL}"
 
 health_code=$(curl -s -o /tmp/health.json -w "%{http_code}" "${BASE_URL}/health")
