@@ -67,9 +67,50 @@ jobs:
     needs: docker-build
     if: github.ref == 'refs/heads/main'
     environment: staging
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      STAGING_KUBECONFIG_B64: ${{ secrets.STAGING_KUBECONFIG_B64 }}
     steps:
       - uses: actions/checkout@v4
-      - uses: azure/setup-kubectl@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+          aws --version
+
+      - name: Configure AWS credentials
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Connect kubectl to EKS cluster
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' }}
+        run: |
+          aws eks update-kubeconfig --region "${{ vars.AWS_REGION }}" --name "${{ vars.EKS_CLUSTER_NAME }}"
+          kubectl get nodes
+
+      - name: Fallback kubeconfig (base64 secret)
+        if: ${{ (env.AWS_ACCESS_KEY_ID == '' || env.AWS_SECRET_ACCESS_KEY == '') && env.STAGING_KUBECONFIG_B64 != '' }}
+        run: |
+          echo "$STAGING_KUBECONFIG_B64" | base64 -d > kubeconfig
+          echo "KUBECONFIG=$PWD/kubeconfig" >> "$GITHUB_ENV"
+          kubectl get nodes
+
+      - name: Guardrail - ensure kube auth configured
+        if: ${{ (env.AWS_ACCESS_KEY_ID == '' || env.AWS_SECRET_ACCESS_KEY == '') && env.STAGING_KUBECONFIG_B64 == '' }}
+        run: |
+          echo "No Kubernetes auth path configured."
+          echo "Set AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY (preferred), or STAGING_KUBECONFIG_B64 (fallback)."
+          exit 1
+
       - name: Validate manifests
         run: |
           kubectl apply --dry-run=client -f docs/deployment/k8s/base/namespace.yaml
@@ -77,16 +118,33 @@ jobs:
           kubectl apply --dry-run=client -f docs/deployment/k8s/base/services.yaml
           kubectl apply --dry-run=client -f docs/deployment/k8s/base/ingress.yaml
           kubectl apply --dry-run=client -f docs/deployment/k8s/hpa/hpa.yaml
-      - name: Apply manifests to staging
-        if: ${{ secrets.STAGING_KUBECONFIG_B64 != '' }}
+
+      - name: Deploy application manifests
         run: |
-          echo "${{ secrets.STAGING_KUBECONFIG_B64 }}" | base64 -d > kubeconfig
-          export KUBECONFIG=$PWD/kubeconfig
           kubectl apply -f docs/deployment/k8s/base/namespace.yaml
           kubectl apply -f docs/deployment/k8s/base/configmap.yaml
           kubectl apply -f docs/deployment/k8s/base/services.yaml
           kubectl apply -f docs/deployment/k8s/base/ingress.yaml
           kubectl apply -f docs/deployment/k8s/hpa/hpa.yaml
+
+      - name: Verify rollout status
+        run: |
+          kubectl -n port-to-shelf rollout status deployment/api-gateway --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/authentication --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/vessel-tracking --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/container-tracking --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/ai-prediction --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/slot-management --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/auction --timeout=180s
+          kubectl -n port-to-shelf rollout status deployment/ulip-integration --timeout=180s
+
+      - name: Capture staging endpoint hints
+        run: |
+          echo "Ingress resources:"
+          kubectl -n port-to-shelf get ingress -o wide || true
+          echo "API Gateway service:"
+          kubectl -n port-to-shelf get svc api-gateway -o wide || true
+          echo "Use the resulting EXTERNAL-IP/hostname to set STAGING_BASE_URL repository variable."
 
   smoke-tests:
     runs-on: ubuntu-latest
