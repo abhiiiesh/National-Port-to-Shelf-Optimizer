@@ -123,3 +123,24 @@ kubectl auth can-i apply deployments -n port-to-shelf
 kubectl auth can-i apply services -n port-to-shelf
 kubectl auth can-i apply configmaps -n port-to-shelf
 ```
+
+## Troubleshooting: AWS credentials valid but `kubectl` says credentials required
+
+If logs show successful `aws sts get-caller-identity` but `kubectl get nodes` fails with:
+
+- `the server has asked for the client to provide credentials`
+
+then IAM authentication to EKS is not mapped for Kubernetes access.
+
+Use one of:
+
+1. Add EKS access entry + policy for the IAM principal used in GitHub Actions.
+2. Provide `STAGING_KUBECONFIG_B64` fallback secret built from an already-authorized kubeconfig.
+
+Example access-entry commands (run with admin principal):
+
+```bash
+aws eks create-access-entry   --cluster-name my-staging-cluster   --principal-arn <IAM_PRINCIPAL_ARN>   --type STANDARD   --region us-west-2
+
+aws eks associate-access-policy   --cluster-name my-staging-cluster   --principal-arn <IAM_PRINCIPAL_ARN>   --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy   --access-scope type=cluster   --region us-west-2
+```

@@ -107,6 +107,8 @@ jobs:
         run: |
           set -euo pipefail
 
+          aws_auth_ok=false
+
           if [[ -n "${AWS_ACCESS_KEY_ID:-}" && -n "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
             echo "Using AWS credential path"
             aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
@@ -114,17 +116,33 @@ jobs:
             aws configure set region "${{ vars.AWS_REGION }}"
             aws sts get-caller-identity
             aws eks update-kubeconfig --region "${{ vars.AWS_REGION }}" --name "${{ vars.EKS_CLUSTER_NAME }}"
-            kubectl get nodes
-          elif [[ -n "${STAGING_KUBECONFIG_B64:-}" ]]; then
-            echo "Using kubeconfig fallback path"
-            echo "$STAGING_KUBECONFIG_B64" | base64 -d > kubeconfig
-            echo "KUBECONFIG=$PWD/kubeconfig" >> "$GITHUB_ENV"
-            export KUBECONFIG=$PWD/kubeconfig
-            kubectl get nodes
-          else
-            echo "No Kubernetes auth path configured."
-            echo "Set AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY (preferred), or STAGING_KUBECONFIG_B64 (fallback)."
-            exit 1
+
+            if kubectl get nodes >/dev/null 2>&1; then
+              aws_auth_ok=true
+              echo "AWS-based kubectl authentication succeeded"
+            else
+              echo "AWS credentials are valid, but Kubernetes API authentication/authorization failed."
+              echo "This usually means EKS access entry / aws-auth RBAC mapping is missing for the IAM principal."
+            fi
+          fi
+
+          if [[ "$aws_auth_ok" != "true" ]]; then
+            if [[ -n "${STAGING_KUBECONFIG_B64:-}" ]]; then
+              echo "Falling back to kubeconfig secret path"
+              echo "$STAGING_KUBECONFIG_B64" | base64 -d > kubeconfig
+              echo "KUBECONFIG=$PWD/kubeconfig" >> "$GITHUB_ENV"
+              export KUBECONFIG=$PWD/kubeconfig
+              kubectl get nodes
+            else
+              echo "No usable Kubernetes auth path configured."
+              echo "Provide one of:"
+              echo "1) IAM principal with EKS access entry + RBAC mapping for AWS credentials path"
+              echo "2) STAGING_KUBECONFIG_B64 fallback secret"
+              echo "Suggested EKS access fix (run once with admin principal):"
+              echo "aws eks create-access-entry --cluster-name ${{ vars.EKS_CLUSTER_NAME }} --principal-arn <IAM_PRINCIPAL_ARN> --type STANDARD --region ${{ vars.AWS_REGION }}"
+              echo "aws eks associate-access-policy --cluster-name ${{ vars.EKS_CLUSTER_NAME }} --principal-arn <IAM_PRINCIPAL_ARN> --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy --access-scope type=cluster --region ${{ vars.AWS_REGION }}"
+              exit 1
+            fi
           fi
 
       - name: Validate manifests
