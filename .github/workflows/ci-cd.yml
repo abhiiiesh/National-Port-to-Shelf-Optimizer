@@ -67,6 +67,10 @@ jobs:
     needs: docker-build
     if: github.ref == 'refs/heads/main'
     environment: staging
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      STAGING_KUBECONFIG_B64: ${{ secrets.STAGING_KUBECONFIG_B64 }}
     steps:
       - uses: actions/checkout@v4
 
