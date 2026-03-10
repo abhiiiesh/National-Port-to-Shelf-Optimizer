@@ -102,6 +102,8 @@ jobs:
     needs: docker-build
     if: github.ref == 'refs/heads/main'
     environment: staging
+    outputs:
+      smoke_base_url: ${{ steps.resolve_smoke_base_url.outputs.smoke_base_url }}
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -246,6 +248,36 @@ jobs:
             exit 1
           fi
 
+      - id: resolve_smoke_base_url
+        name: Resolve staging smoke base URL
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          configured_url="${{ vars.STAGING_BASE_URL }}"
+          resolved_url=""
+
+          if [[ -n "$configured_url" ]]; then
+            resolved_url="$configured_url"
+            echo "Using STAGING_BASE_URL from repo vars: $resolved_url"
+          else
+            ingress_host=$(kubectl -n port-to-shelf get ingress -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+            ingress_ip=$(kubectl -n port-to-shelf get ingress -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+            svc_host=$(kubectl -n port-to-shelf get svc api-gateway -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+            svc_ip=$(kubectl -n port-to-shelf get svc api-gateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+
+            candidate="${ingress_host:-${ingress_ip:-${svc_host:-${svc_ip:-}}}}"
+            if [[ -n "$candidate" ]]; then
+              resolved_url="http://$candidate"
+              echo "Resolved smoke URL from cluster endpoint: $resolved_url"
+            else
+              echo "::warning::Could not resolve external endpoint from ingress/service. Smoke test may fail unless STAGING_BASE_URL is configured."
+            fi
+          fi
+
+          echo "smoke_base_url=$resolved_url" >> "$GITHUB_OUTPUT"
+
       - name: Capture staging endpoint hints
         if: ${{ always() }}
         run: |
@@ -253,7 +285,8 @@ jobs:
           kubectl -n port-to-shelf get ingress -o wide || true
           echo "API Gateway service:"
           kubectl -n port-to-shelf get svc api-gateway -o wide || true
-          echo "Use the resulting EXTERNAL-IP/hostname to set STAGING_BASE_URL repository variable."
+          echo "Resolved smoke base URL: ${{ steps.resolve_smoke_base_url.outputs.smoke_base_url }}"
+          echo "Set STAGING_BASE_URL repo variable to avoid endpoint auto-discovery drift."
 
   smoke-tests:
     runs-on: ubuntu-latest
@@ -263,5 +296,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run smoke test script
         env:
-          SMOKE_BASE_URL: ${{ vars.STAGING_BASE_URL }}
+          SMOKE_BASE_URL: ${{ needs.deploy-staging.outputs.smoke_base_url }}
         run: bash scripts/smoke/smoke-test.sh
