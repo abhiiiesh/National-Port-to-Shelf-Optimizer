@@ -1,19 +1,16 @@
 # EKS + GitHub Actions Staging Setup
 
-This guide maps exactly to your requested sequence (Step 1 to Step 8) and aligns with `.github/workflows/ci-cd.yml`.
+This guide follows your requested Step 1 → Step 8 flow for staging on EKS.
 
-## Prerequisites
+## Environment values for this project
 
-- EKS cluster already created (your Step 0 done).
-- AWS IAM user/role with permissions for:
-  - `eks:DescribeCluster`
-  - `eks:ListClusters`
-  - `eks:AccessKubernetesApi`
-  - cluster RBAC permissions to deploy manifests in `port-to-shelf` namespace.
+- `AWS_REGION`: `us-west-2` (US West / Oregon)
+- `EKS_CLUSTER_NAME`: `my-staging-cluster`
+- `STAGING_BASE_URL`: set this **after** first successful deploy by using ingress/service external endpoint.
 
 ---
 
-## Step 1 — Install kubectl (local machine)
+## Step 1 — Install kubectl
 
 ```bash
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -22,7 +19,7 @@ sudo mv kubectl /usr/local/bin/
 kubectl version --client
 ```
 
-## Step 2 — Install AWS CLI (local machine)
+## Step 2 — Install AWS CLI
 
 ```bash
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -35,7 +32,7 @@ aws --version
 
 ```bash
 aws configure
-aws eks update-kubeconfig --region <AWS_REGION> --name <EKS_CLUSTER_NAME>
+aws eks update-kubeconfig --region us-west-2 --name my-staging-cluster
 kubectl get nodes
 ```
 
@@ -51,66 +48,78 @@ kubectl apply -f docs/deployment/k8s/hpa/hpa.yaml
 
 ## Step 5 — Expose the service
 
-Current ingress manifest exposes API Gateway. Verify:
-
 ```bash
-kubectl -n port-to-shelf get ingress
-kubectl -n port-to-shelf get svc api-gateway
+kubectl -n port-to-shelf get ingress -o wide
+kubectl -n port-to-shelf get svc api-gateway -o wide
 ```
 
-If AWS Load Balancer Controller is installed, `EXTERNAL-IP`/hostname will populate after a few minutes.
+Take the external DNS/IP and set repository variable `STAGING_BASE_URL` (for smoke tests).
 
-## Step 6 — Generate kubeconfig secret for GitHub (optional fallback)
-
-If you choose kubeconfig-based auth instead of AWS credentials in Actions:
+## Step 6 — Generate kubeconfig secret for GitHub (fallback path)
 
 ```bash
 cat ~/.kube/config | base64 -w 0
 ```
 
-Store output as GitHub secret `STAGING_KUBECONFIG_B64`.
+Save as GitHub Secret: `STAGING_KUBECONFIG_B64`.
 
-## Step 7 — Add GitHub Variables/Secrets
+## Step 7 — Add GitHub Variables and Secrets
 
-Repository settings → Secrets and variables → Actions:
+Repository → **Settings** → **Secrets and variables** → **Actions**.
 
-### Required variables
+### Variables
 
-- `AWS_REGION`
-- `EKS_CLUSTER_NAME`
-- `STAGING_BASE_URL` (for smoke tests)
+- `AWS_REGION=us-west-2`
+- `EKS_CLUSTER_NAME=my-staging-cluster`
+- `STAGING_BASE_URL=<external endpoint from Step 5>`
 
-### Required secrets
+### Secrets (preferred auth path)
 
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 
-### Optional secret
+### Optional fallback secret
 
-- `STAGING_KUBECONFIG_B64` (fallback only)
+- `STAGING_KUBECONFIG_B64`
 
 ## Step 8 — Deploy from GitHub Actions
 
-1. Push to `main` (or trigger `workflow_dispatch`).
-2. The `deploy-staging` job now does:
-   - install kubectl
-   - install AWS CLI
-   - configure AWS credentials
-   - run `aws eks update-kubeconfig`
-   - validate/apply manifests
-   - verify rollout status
-3. `smoke-tests` job runs after deploy using `scripts/smoke/smoke-test.sh`.
+Push to `main` (or run workflow_dispatch).
+
+The deploy job now supports two auth modes:
+
+1. **Preferred**: AWS credentials → `aws eks update-kubeconfig`
+2. **Fallback**: `STAGING_KUBECONFIG_B64`
+
+Then it:
+
+- validates manifests
+- applies manifests
+- verifies rollout status for all deployments
+- prints ingress/service endpoint hints for setting `STAGING_BASE_URL`
 
 ---
 
-## What I need from your side
+## IAM + RBAC confirmation checklist
 
-To complete the connection in your GitHub repo, please provide/configure:
+To allow deployment principal access:
 
-1. `AWS_REGION` value.
-2. `EKS_CLUSTER_NAME` value.
-3. `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` secrets (or tell me if you want role-based OIDC instead).
-4. `STAGING_BASE_URL` variable for smoke checks.
-5. Confirm that your IAM principal is authorized in EKS (`aws-auth` / access entries) to perform `kubectl apply`.
+1. Run:
 
-Once these are set, pushing to `main` will deploy to your EKS staging cluster automatically.
+```bash
+aws eks update-kubeconfig --region us-west-2 --name my-staging-cluster
+```
+
+2. Ensure the IAM principal is mapped/authorized for Kubernetes API access (via EKS access entries or `aws-auth` ConfigMap):
+
+```bash
+kubectl edit configmap aws-auth -n kube-system
+```
+
+3. Confirm principal can apply manifests in namespace:
+
+```bash
+kubectl auth can-i apply deployments -n port-to-shelf
+kubectl auth can-i apply services -n port-to-shelf
+kubectl auth can-i apply configmaps -n port-to-shelf
+```

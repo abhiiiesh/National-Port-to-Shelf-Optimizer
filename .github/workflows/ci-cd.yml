@@ -80,6 +80,7 @@ jobs:
           aws --version
 
       - name: Configure AWS credentials
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -87,9 +88,24 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Connect kubectl to EKS cluster
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
         run: |
           aws eks update-kubeconfig --region "${{ vars.AWS_REGION }}" --name "${{ vars.EKS_CLUSTER_NAME }}"
           kubectl get nodes
+
+      - name: Fallback kubeconfig (base64 secret)
+        if: ${{ (secrets.AWS_ACCESS_KEY_ID == '' || secrets.AWS_SECRET_ACCESS_KEY == '') && secrets.STAGING_KUBECONFIG_B64 != '' }}
+        run: |
+          echo "${{ secrets.STAGING_KUBECONFIG_B64 }}" | base64 -d > kubeconfig
+          echo "KUBECONFIG=$PWD/kubeconfig" >> "$GITHUB_ENV"
+          kubectl get nodes
+
+      - name: Guardrail - ensure kube auth configured
+        if: ${{ (secrets.AWS_ACCESS_KEY_ID == '' || secrets.AWS_SECRET_ACCESS_KEY == '') && secrets.STAGING_KUBECONFIG_B64 == '' }}
+        run: |
+          echo "No Kubernetes auth path configured."
+          echo "Set AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY (preferred), or STAGING_KUBECONFIG_B64 (fallback)."
+          exit 1
 
       - name: Validate manifests
         run: |
@@ -117,6 +133,14 @@ jobs:
           kubectl -n port-to-shelf rollout status deployment/slot-management --timeout=180s
           kubectl -n port-to-shelf rollout status deployment/auction --timeout=180s
           kubectl -n port-to-shelf rollout status deployment/ulip-integration --timeout=180s
+
+      - name: Capture staging endpoint hints
+        run: |
+          echo "Ingress resources:"
+          kubectl -n port-to-shelf get ingress -o wide || true
+          echo "API Gateway service:"
+          kubectl -n port-to-shelf get svc api-gateway -o wide || true
+          echo "Use the resulting EXTERNAL-IP/hostname to set STAGING_BASE_URL repository variable."
 
   smoke-tests:
     runs-on: ubuntu-latest
