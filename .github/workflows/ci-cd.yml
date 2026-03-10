@@ -27,6 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     strategy:
+      fail-fast: false
       matrix:
         include:
           - name: api-gateway
@@ -62,7 +63,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
+      - id: build_primary
+        name: Build and (optionally) push image
+        continue-on-error: true
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile.service
@@ -72,6 +76,26 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/port-to-shelf-${{ matrix.name }}:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/port-to-shelf-${{ matrix.name }}:latest
+
+      - id: build_retry
+        name: Retry image build once on transient failure
+        if: steps.build_primary.outcome == 'failure'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.service
+          push: ${{ github.ref == 'refs/heads/main' }}
+          build-args: |
+            SERVICE_PATH=${{ matrix.path }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/port-to-shelf-${{ matrix.name }}:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/port-to-shelf-${{ matrix.name }}:latest
+
+      - name: Fail job if both build attempts failed
+        if: steps.build_primary.outcome == 'failure' && steps.build_retry.outcome == 'failure'
+        run: |
+          echo "Both primary and retry image builds failed for ${{ matrix.name }}"
+          exit 1
 
   deploy-staging:
     runs-on: ubuntu-latest
@@ -160,6 +184,20 @@ jobs:
           kubectl apply -f docs/deployment/k8s/base/services.yaml
           kubectl apply -f docs/deployment/k8s/base/ingress.yaml
           kubectl apply -f docs/deployment/k8s/hpa/hpa.yaml
+
+      - name: Pin deployments to immutable image tags
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          namespace="port-to-shelf"
+
+          for service in api-gateway authentication vessel-tracking container-tracking ai-prediction slot-management auction ulip-integration; do
+            image="ghcr.io/${owner}/port-to-shelf-${service}:${{ github.sha }}"
+            echo "Setting deployment/${service} image to ${image}"
+            kubectl -n "$namespace" set image "deployment/${service}" "${service}=${image}"
+          done
 
       - name: Verify rollout status
         shell: bash
