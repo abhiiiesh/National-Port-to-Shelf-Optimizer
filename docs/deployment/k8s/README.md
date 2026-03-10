@@ -28,3 +28,7 @@ Deployments are wired to GHCR images (`ghcr.io/abhiiiesh/port-to-shelf-<service>
 
 Kubernetes Services provide internal DNS-based discovery (e.g., `http://authentication:3005`).
 HPA rules are configured per service to enable CPU-based autoscaling.
+
+## EKS + GitHub Actions staging automation
+
+See `docs/deployment/eks-github-actions-setup.md` for end-to-end setup and required repo secrets/variables.
