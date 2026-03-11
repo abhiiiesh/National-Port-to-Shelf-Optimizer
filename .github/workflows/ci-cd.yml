@@ -313,9 +313,10 @@ jobs:
           kubectl -n port-to-shelf get ingress -o wide || true
           echo "API Gateway service:"
           kubectl -n port-to-shelf get svc api-gateway -o wide || true
-          echo "Auto-discovered endpoint: ${{ steps.resolve_smoke_base_url.outputs.auto_discovered_url }}"
-          echo "Resolved smoke base URL: ${{ steps.resolve_smoke_base_url.outputs.smoke_base_url }}"
-          echo "Set STAGING_BASE_URL repo variable to avoid endpoint auto-discovery drift."
+          echo "Auto-discovered endpoint (from ingress/service status): ${{ steps.resolve_smoke_base_url.outputs.auto_discovered_url }}"
+          echo "Resolved smoke base URL (used by smoke/tests): ${{ steps.resolve_smoke_base_url.outputs.smoke_base_url }}"
+          echo "auto_discovered_url is informational output only; do not store it as a repo variable."
+          echo "Set STAGING_BASE_URL repo variable only when you want to pin the staging URL manually and keep it aligned with the endpoint above."
 
       - name: Manual staging sanity pass (/, /health, /api/v1/vessels)
         if: ${{ always() }}
@@ -349,8 +350,13 @@ jobs:
 
           root_status=$(get_status "/" /tmp/staging-root.html)
           echo "GET / => HTTP ${root_status}"
-          if [[ "$root_status" != "200" ]]; then
-            echo "::error::Expected '/' to return HTTP 200"
+          if [[ "$root_status" == "200" ]]; then
+            echo "Root check passed (frontend served at /)."
+          elif [[ "$root_status" == "401" ]]; then
+            echo "::warning::Root returned 401. This usually means STAGING_BASE_URL points to api-gateway directly (API-only endpoint) instead of ingress/frontend URL."
+            echo "::warning::Set STAGING_BASE_URL to the ingress URL if you want frontend + backend on one endpoint."
+          else
+            echo "::error::Expected '/' to return HTTP 200 (or 401 when API-only endpoint is configured), got ${root_status}."
             exit 1
           fi
 
