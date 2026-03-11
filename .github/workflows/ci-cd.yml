@@ -27,24 +27,36 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     strategy:
+      fail-fast: false
       matrix:
         include:
           - name: api-gateway
             path: services/api-gateway
+            dockerfile: Dockerfile.service
           - name: authentication
             path: services/authentication
+            dockerfile: Dockerfile.service
           - name: vessel-tracking
             path: services/vessel-tracking
+            dockerfile: Dockerfile.service
           - name: container-tracking
             path: services/container-tracking
+            dockerfile: Dockerfile.service
           - name: ai-prediction
             path: services/ai-prediction
+            dockerfile: Dockerfile.service
           - name: auction
             path: services/auction
+            dockerfile: Dockerfile.service
           - name: slot-management
             path: services/slot-management
+            dockerfile: Dockerfile.service
           - name: ulip-integration
             path: services/ulip-integration
+            dockerfile: Dockerfile.service
+          - name: frontend
+            path: services/frontend
+            dockerfile: Dockerfile.frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -53,7 +65,14 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - name: Preflight TypeScript build for target workspace
-        run: npm run build --workspace @port-to-shelf/shared-types && npm run build --workspace @port-to-shelf/database && npm run build --workspace=${{ matrix.path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build --workspace @port-to-shelf/shared-types
+          if [[ "${{ matrix.path }}" != "services/frontend" ]]; then
+            npm run build --workspace @port-to-shelf/database
+          fi
+          npm run build --workspace=${{ matrix.path }}
       - uses: docker/setup-buildx-action@v3
       - name: Login to GHCR
         if: github.ref == 'refs/heads/main'
@@ -62,10 +81,13 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
+      - id: build_primary
+        name: Build and (optionally) push image
+        continue-on-error: true
+        uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.service
+          file: ${{ matrix.dockerfile }}
           push: ${{ github.ref == 'refs/heads/main' }}
           build-args: |
             SERVICE_PATH=${{ matrix.path }}
@@ -73,11 +95,33 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/port-to-shelf-${{ matrix.name }}:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/port-to-shelf-${{ matrix.name }}:latest
 
+      - id: build_retry
+        name: Retry image build once on transient failure
+        if: steps.build_primary.outcome == 'failure'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: ${{ github.ref == 'refs/heads/main' }}
+          build-args: |
+            SERVICE_PATH=${{ matrix.path }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/port-to-shelf-${{ matrix.name }}:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/port-to-shelf-${{ matrix.name }}:latest
+
+      - name: Fail job if both build attempts failed
+        if: steps.build_primary.outcome == 'failure' && steps.build_retry.outcome == 'failure'
+        run: |
+          echo "Both primary and retry image builds failed for ${{ matrix.name }}"
+          exit 1
+
   deploy-staging:
     runs-on: ubuntu-latest
     needs: docker-build
     if: github.ref == 'refs/heads/main'
     environment: staging
+    outputs:
+      smoke_base_url: ${{ steps.resolve_smoke_base_url.outputs.smoke_base_url }}
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -161,6 +205,20 @@ jobs:
           kubectl apply -f docs/deployment/k8s/base/ingress.yaml
           kubectl apply -f docs/deployment/k8s/hpa/hpa.yaml
 
+      - name: Pin deployments to immutable image tags
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          namespace="port-to-shelf"
+
+          for service in api-gateway authentication vessel-tracking container-tracking ai-prediction slot-management auction ulip-integration frontend; do
+            image="ghcr.io/${owner}/port-to-shelf-${service}:${{ github.sha }}"
+            echo "Setting deployment/${service} image to ${image}"
+            kubectl -n "$namespace" set image "deployment/${service}" "${service}=${image}"
+          done
+
       - name: Verify rollout status
         shell: bash
         run: |
@@ -177,6 +235,7 @@ jobs:
             slot-management
             auction
             ulip-integration
+            frontend
           )
 
           failed=0
@@ -208,6 +267,36 @@ jobs:
             exit 1
           fi
 
+      - id: resolve_smoke_base_url
+        name: Resolve staging smoke base URL
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          configured_url="${{ vars.STAGING_BASE_URL }}"
+          resolved_url=""
+
+          if [[ -n "$configured_url" ]]; then
+            resolved_url="$configured_url"
+            echo "Using STAGING_BASE_URL from repo vars: $resolved_url"
+          else
+            ingress_host=$(kubectl -n port-to-shelf get ingress -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+            ingress_ip=$(kubectl -n port-to-shelf get ingress -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+            svc_host=$(kubectl -n port-to-shelf get svc api-gateway -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+            svc_ip=$(kubectl -n port-to-shelf get svc api-gateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+
+            candidate="${ingress_host:-${ingress_ip:-${svc_host:-${svc_ip:-}}}}"
+            if [[ -n "$candidate" ]]; then
+              resolved_url="http://$candidate"
+              echo "Resolved smoke URL from cluster endpoint: $resolved_url"
+            else
+              echo "::warning::Could not resolve external endpoint from ingress/service. Smoke test may fail unless STAGING_BASE_URL is configured."
+            fi
+          fi
+
+          echo "smoke_base_url=$resolved_url" >> "$GITHUB_OUTPUT"
+
       - name: Capture staging endpoint hints
         if: ${{ always() }}
         run: |
@@ -215,15 +304,110 @@ jobs:
           kubectl -n port-to-shelf get ingress -o wide || true
           echo "API Gateway service:"
           kubectl -n port-to-shelf get svc api-gateway -o wide || true
-          echo "Use the resulting EXTERNAL-IP/hostname to set STAGING_BASE_URL repository variable."
+          echo "Resolved smoke base URL: ${{ steps.resolve_smoke_base_url.outputs.smoke_base_url }}"
+          echo "Set STAGING_BASE_URL repo variable to avoid endpoint auto-discovery drift."
 
   smoke-tests:
     runs-on: ubuntu-latest
     needs: deploy-staging
     if: github.ref == 'refs/heads/main'
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      STAGING_KUBECONFIG_B64: ${{ secrets.STAGING_KUBECONFIG_B64 }}
+      RESOLVED_SMOKE_BASE_URL: ${{ needs.deploy-staging.outputs.smoke_base_url }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Install AWS CLI v2
+        if: ${{ env.AWS_ACCESS_KEY_ID != '' && env.AWS_SECRET_ACCESS_KEY != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v unzip >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y unzip
+          fi
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip -q awscliv2.zip
+          sudo ./aws/install --update
+          aws --version
+
+      - name: Configure Kubernetes authentication for smoke fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          aws_auth_ok=false
+
+          if [[ -n "${AWS_ACCESS_KEY_ID:-}" && -n "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
+            aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+            aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+            aws configure set region "${{ vars.AWS_REGION }}"
+            aws eks update-kubeconfig --region "${{ vars.AWS_REGION }}" --name "${{ vars.EKS_CLUSTER_NAME }}"
+            if kubectl get nodes >/dev/null 2>&1; then
+              aws_auth_ok=true
+            fi
+          fi
+
+          if [[ "$aws_auth_ok" != "true" ]]; then
+            if [[ -n "${STAGING_KUBECONFIG_B64:-}" ]]; then
+              echo "$STAGING_KUBECONFIG_B64" | base64 -d > kubeconfig
+              echo "KUBECONFIG=$PWD/kubeconfig" >> "$GITHUB_ENV"
+              export KUBECONFIG=$PWD/kubeconfig
+              kubectl get nodes >/dev/null 2>&1
+            else
+              echo "::warning::No Kubernetes auth path available for smoke fallback."
+            fi
+          fi
+
       - name: Run smoke test script
-        env:
-          SMOKE_BASE_URL: ${{ vars.STAGING_BASE_URL }}
-        run: bash scripts/smoke/smoke-test.sh
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          smoke_url="${RESOLVED_SMOKE_BASE_URL:-}"
+          pf_pid=""
+
+          cleanup() {
+            if [[ -n "$pf_pid" ]]; then
+              kill "$pf_pid" || true
+            fi
+          }
+          trap cleanup EXIT
+
+          if [[ -n "$smoke_url" ]]; then
+            echo "Checking reachability of resolved smoke URL: $smoke_url"
+            if ! curl --connect-timeout 5 --max-time 15 -fsS "$smoke_url/health" >/dev/null 2>&1; then
+              echo "Resolved smoke URL is not reachable yet; will try port-forward fallback"
+              smoke_url=""
+            fi
+          fi
+
+          if [[ -z "$smoke_url" ]]; then
+            echo "Smoke base URL not resolved/reachable; using kubectl port-forward fallback"
+            kubectl -n port-to-shelf port-forward svc/api-gateway 3000:3000 >/tmp/port-forward.log 2>&1 &
+            pf_pid=$!
+
+            for _ in {1..30}; do
+              if curl --connect-timeout 2 --max-time 5 -fsS http://127.0.0.1:3000/health >/dev/null 2>&1; then
+                smoke_url="http://127.0.0.1:3000"
+                break
+              fi
+              sleep 2
+            done
+          fi
+
+          if [[ -z "$smoke_url" ]]; then
+            echo "::error::Unable to resolve smoke base URL or establish port-forward fallback."
+            [[ -f /tmp/port-forward.log ]] && cat /tmp/port-forward.log || true
+            exit 1
+          fi
+
+          export SMOKE_BASE_URL="$smoke_url"
+          export SMOKE_CURL_TIMEOUT_SECONDS=15
+          export SMOKE_EXPECT_FRONTEND=true
+          bash scripts/smoke/smoke-test.sh
