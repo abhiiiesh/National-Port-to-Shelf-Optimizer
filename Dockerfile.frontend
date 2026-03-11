@@ -5,7 +5,7 @@ COPY packages ./packages
 COPY services ./services
 COPY tsconfig.json jest.config.js jest.setup.js .eslintrc.json ./
 RUN npm ci
-RUN npm run build --workspace @port-to-shelf/shared-types && npm run build --workspace @port-to-shelf/frontend
+RUN npm run build --workspace @port-to-shelf/shared-types && npm run build:web --workspace @port-to-shelf/frontend
 
 FROM nginx:1.27-alpine AS runner
 COPY --from=builder /app/services/frontend/dist /usr/share/nginx/html
