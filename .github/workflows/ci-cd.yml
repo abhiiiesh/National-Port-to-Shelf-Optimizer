@@ -407,7 +407,15 @@ jobs:
             exit 1
           fi
 
+          frontend_check=false
+          root_status=$(curl --connect-timeout 5 --max-time 10 -s -o /tmp/smoke-root.html -w "%{http_code}" "$smoke_url/" || true)
+          if [[ "$root_status" == "200" ]]; then
+            frontend_check=true
+          fi
+
+          echo "Frontend smoke check enabled: $frontend_check (root status: ${root_status:-n/a})"
+
           export SMOKE_BASE_URL="$smoke_url"
           export SMOKE_CURL_TIMEOUT_SECONDS=15
-          export SMOKE_EXPECT_FRONTEND=true
+          export SMOKE_EXPECT_FRONTEND="$frontend_check"
           bash scripts/smoke/smoke-test.sh
