@@ -12,12 +12,6 @@ if [[ -z "${SMOKE_BASE_URL:-}" && "${GITHUB_ACTIONS:-false}" == "true" ]]; then
   exit 1
 fi
 
-if [[ -z "${SMOKE_BASE_URL:-}" && "${GITHUB_ACTIONS:-false}" == "true" ]]; then
-  echo "SMOKE_BASE_URL is empty in CI. Refusing localhost fallback."
-  echo "Set STAGING_BASE_URL repository variable or ensure deploy job resolves external endpoint."
-  exit 1
-fi
-
 echo "Running smoke tests against ${BASE_URL}"
 
 health_code=$(curl "${CURL_OPTS[@]}" -s -o /tmp/health.json -w "%{http_code}" "${BASE_URL}/health")
@@ -37,6 +31,15 @@ if [[ "${vessel_code}" != "401" ]]; then
 fi
 
 echo "Protected endpoint unauth check passed"
+
+if [[ "${SMOKE_EXPECT_FRONTEND:-false}" == "true" ]]; then
+  ui_code=$(curl "${CURL_OPTS[@]}" -s -o /tmp/frontend.html -w "%{http_code}" "${BASE_URL}/")
+  if [[ "${ui_code}" != "200" ]]; then
+    echo "Frontend root check failed with status ${ui_code}"
+    exit 1
+  fi
+  echo "Frontend root check passed"
+fi
 
 if [[ -n "${TOKEN}" ]]; then
   echo "Running authenticated smoke checks"

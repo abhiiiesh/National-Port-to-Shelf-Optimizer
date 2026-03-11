@@ -32,20 +32,31 @@ jobs:
         include:
           - name: api-gateway
             path: services/api-gateway
+            dockerfile: Dockerfile.service
           - name: authentication
             path: services/authentication
+            dockerfile: Dockerfile.service
           - name: vessel-tracking
             path: services/vessel-tracking
+            dockerfile: Dockerfile.service
           - name: container-tracking
             path: services/container-tracking
+            dockerfile: Dockerfile.service
           - name: ai-prediction
             path: services/ai-prediction
+            dockerfile: Dockerfile.service
           - name: auction
             path: services/auction
+            dockerfile: Dockerfile.service
           - name: slot-management
             path: services/slot-management
+            dockerfile: Dockerfile.service
           - name: ulip-integration
             path: services/ulip-integration
+            dockerfile: Dockerfile.service
+          - name: frontend
+            path: services/frontend
+            dockerfile: Dockerfile.frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -54,7 +65,14 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - name: Preflight TypeScript build for target workspace
-        run: npm run build --workspace @port-to-shelf/shared-types && npm run build --workspace @port-to-shelf/database && npm run build --workspace=${{ matrix.path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build --workspace @port-to-shelf/shared-types
+          if [[ "${{ matrix.path }}" != "services/frontend" ]]; then
+            npm run build --workspace @port-to-shelf/database
+          fi
+          npm run build --workspace=${{ matrix.path }}
       - uses: docker/setup-buildx-action@v3
       - name: Login to GHCR
         if: github.ref == 'refs/heads/main'
@@ -69,7 +87,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.service
+          file: ${{ matrix.dockerfile }}
           push: ${{ github.ref == 'refs/heads/main' }}
           build-args: |
             SERVICE_PATH=${{ matrix.path }}
@@ -83,7 +101,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.service
+          file: ${{ matrix.dockerfile }}
           push: ${{ github.ref == 'refs/heads/main' }}
           build-args: |
             SERVICE_PATH=${{ matrix.path }}
@@ -195,7 +213,7 @@ jobs:
           owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           namespace="port-to-shelf"
 
-          for service in api-gateway authentication vessel-tracking container-tracking ai-prediction slot-management auction ulip-integration; do
+          for service in api-gateway authentication vessel-tracking container-tracking ai-prediction slot-management auction ulip-integration frontend; do
             image="ghcr.io/${owner}/port-to-shelf-${service}:${{ github.sha }}"
             echo "Setting deployment/${service} image to ${image}"
             kubectl -n "$namespace" set image "deployment/${service}" "${service}=${image}"
@@ -217,6 +235,7 @@ jobs:
             slot-management
             auction
             ulip-integration
+            frontend
           )
 
           failed=0
@@ -390,4 +409,5 @@ jobs:
 
           export SMOKE_BASE_URL="$smoke_url"
           export SMOKE_CURL_TIMEOUT_SECONDS=15
+          export SMOKE_EXPECT_FRONTEND=true
           bash scripts/smoke/smoke-test.sh
