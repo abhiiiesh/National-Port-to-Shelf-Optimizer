@@ -1,4 +1,4 @@
-FROM node:20-alpine AS deps
+FROM node:20-bookworm-slim AS deps
 WORKDIR /app
 COPY package*.json ./
 COPY packages ./packages
@@ -10,7 +10,7 @@ FROM deps AS builder
 ARG SERVICE_PATH
 RUN npm run build --workspace @port-to-shelf/shared-types && npm run build --workspace @port-to-shelf/database && npm run build --workspace=${SERVICE_PATH}
 
-FROM node:20-alpine AS runner
+FROM node:20-bookworm-slim AS runner
 WORKDIR /app
 ARG SERVICE_PATH
 COPY --from=deps /app/package*.json ./
