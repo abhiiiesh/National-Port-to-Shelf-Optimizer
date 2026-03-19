@@ -1,10 +1,5 @@
-import {
-  appRoutes,
-  notFoundFallbackPath,
-  type AppRoute,
-  type UserRole,
-  unauthorizedFallbackPath,
-} from './routes';
+import type { UserRole } from './access-control';
+import { appRoutes, notFoundFallbackPath, type AppRoute, unauthorizedFallbackPath } from './routes';
 
 export interface RouteResolution {
   route: AppRoute | null;
