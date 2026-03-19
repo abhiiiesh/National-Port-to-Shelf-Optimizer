@@ -6,8 +6,8 @@ This folder contains baseline Kubernetes manifests for all services.
 
 - `base/namespace.yaml` - namespace definition
 - `base/configmap.yaml` - shared runtime configuration
-- `base/services.yaml` - deployments + services for all platform services
-- `base/ingress.yaml` - ingress for API Gateway
+- `base/services.yaml` - deployments + services for all platform services (backend + frontend)
+- `base/ingress.yaml` - ingress routes for frontend (`/`) and API gateway (`/api`, `/health`)
 - `hpa/hpa.yaml` - horizontal pod autoscaling rules
 
 ## Apply
@@ -19,6 +19,20 @@ kubectl apply -f docs/deployment/k8s/base/services.yaml
 kubectl apply -f docs/deployment/k8s/base/ingress.yaml
 kubectl apply -f docs/deployment/k8s/hpa/hpa.yaml
 ```
+
+## Service exposure
+
+`api-gateway` Service is configured as `LoadBalancer` to provide an external endpoint in cloud environments (e.g., EKS), which can be used as `STAGING_BASE_URL` for smoke tests.
+
+### Quick ingress host-rule fix for public API access
+
+If requests to the ELB DNS are rejected due to strict host matching (e.g., host fixed to `api.port-to-shelf.local`), use an ingress rule without a `host` key so requests using the raw ELB DNS are routed.
+
+Current baseline ingress already follows this host-agnostic approach and routes:
+
+- `/api` -> `api-gateway:3000`
+- `/health` -> `api-gateway:3000`
+- `/` -> `frontend:80`
 
 ## Image strategy
 
