@@ -29,6 +29,51 @@ export interface UserAssignment {
   status: 'Active' | 'Pending Review' | 'Escalated';
 }
 
+export interface AccessRequest {
+  requestId: string;
+  requesterName: string;
+  team: string;
+  currentRole: UserRole;
+  requestedRole: UserRole;
+  requestedBy: UserRole;
+  status: 'Pending Approval' | 'Approved' | 'Rejected';
+  reason: string;
+  tenant: string;
+  submittedAt: string;
+}
+
+export interface AuditEntry {
+  id: string;
+  actor: string;
+  actorRole: UserRole;
+  timestamp: string;
+  tenant: string;
+  targetUser: string;
+  oldRole: UserRole;
+  newRole: UserRole;
+  reason: string;
+  outcome: 'Approved' | 'Rejected' | 'Requested';
+}
+
+export type GovernedAction =
+  | 'reroute'
+  | 'escalate'
+  | 'hold'
+  | 'release'
+  | 'assign-slot'
+  | 'create-auction'
+  | 'pause-auction'
+  | 'close-auction'
+  | 'award-auction'
+  | 'reject-bid';
+
+export interface RoleActionPolicy {
+  role: UserRole;
+  trackingActions: GovernedAction[];
+  auctionActions: GovernedAction[];
+  canApproveAssignments: boolean;
+}
+
 export const roleCapabilities: RoleCapability[] = [
   {
     role: 'OPERATIONS_MANAGER',
@@ -45,8 +90,13 @@ export const roleCapabilities: RoleCapability[] = [
   {
     role: 'PORT_ADMIN',
     label: 'Port Admin',
-    description: 'Controls port operations, berth readiness, and assignment governance.',
-    permissions: ['Port tracking control', 'Capacity overrides', 'Role assignment approvals'],
+    description:
+      'Controls port operations, berth readiness, and submits governance change requests.',
+    permissions: [
+      'Port tracking control',
+      'Capacity overrides',
+      'Role assignment request creation',
+    ],
     defaultRoute: '/tracking',
   },
   {
@@ -66,7 +116,7 @@ export const roleCapabilities: RoleCapability[] = [
   {
     role: 'ADMIN',
     label: 'Platform Admin',
-    description: 'Maintains policy, security, role mappings, and environment governance.',
+    description: 'Maintains policy, security, role mappings, and approves access-control changes.',
     permissions: ['Access control', 'Environment policy', 'All operational views'],
     defaultRoute: '/access-control',
   },
@@ -84,6 +134,118 @@ export const roleAssignments: UserAssignment[] = [
   { name: 'Arun Iyer', team: 'Executive Office', role: 'EXECUTIVE_STAKEHOLDER', status: 'Active' },
   { name: 'Platform Governance', team: 'Digital Core', role: 'ADMIN', status: 'Escalated' },
 ];
+
+export const initialAccessRequests: AccessRequest[] = [
+  {
+    requestId: 'REQ-201',
+    requesterName: 'Meera Kulkarni',
+    team: 'Auction Desk',
+    currentRole: 'AUCTION_OPERATOR',
+    requestedRole: 'PORT_ADMIN',
+    requestedBy: 'PORT_ADMIN',
+    status: 'Pending Approval',
+    reason: 'Temporary berth coordination coverage during regional leave window.',
+    tenant: 'port-to-shelf-india',
+    submittedAt: '2026-03-19 09:10 UTC',
+  },
+  {
+    requestId: 'REQ-202',
+    requesterName: 'Arun Iyer',
+    team: 'Executive Office',
+    currentRole: 'EXECUTIVE_STAKEHOLDER',
+    requestedRole: 'OPERATIONS_MANAGER',
+    requestedBy: 'PORT_ADMIN',
+    status: 'Pending Approval',
+    reason: 'Requested temporary drill-down access for disruption review board.',
+    tenant: 'port-to-shelf-india',
+    submittedAt: '2026-03-19 10:00 UTC',
+  },
+];
+
+export const initialAuditEntries: AuditEntry[] = [
+  {
+    id: 'AUD-3001',
+    actor: 'System Bootstrap',
+    actorRole: 'ADMIN',
+    timestamp: '2026-03-18 17:40 UTC',
+    tenant: 'port-to-shelf-india',
+    targetUser: 'Rajiv Menon',
+    oldRole: 'OPERATIONS_MANAGER',
+    newRole: 'PORT_ADMIN',
+    reason: 'Initial governance seed aligned with terminal command structure.',
+    outcome: 'Approved',
+  },
+  {
+    id: 'AUD-3002',
+    actor: 'Anika Sharma',
+    actorRole: 'PORT_ADMIN',
+    timestamp: '2026-03-19 09:10 UTC',
+    tenant: 'port-to-shelf-india',
+    targetUser: 'Meera Kulkarni',
+    oldRole: 'AUCTION_OPERATOR',
+    newRole: 'PORT_ADMIN',
+    reason: 'Submitted temporary cross-functional access request.',
+    outcome: 'Requested',
+  },
+];
+
+export const roleActionPolicies: RoleActionPolicy[] = [
+  {
+    role: 'OPERATIONS_MANAGER',
+    trackingActions: ['reroute', 'escalate', 'hold', 'release', 'assign-slot'],
+    auctionActions: ['create-auction', 'pause-auction', 'close-auction'],
+    canApproveAssignments: false,
+  },
+  {
+    role: 'PORT_ADMIN',
+    trackingActions: ['reroute', 'escalate', 'hold', 'release', 'assign-slot'],
+    auctionActions: ['create-auction', 'pause-auction', 'close-auction', 'award-auction'],
+    canApproveAssignments: false,
+  },
+  {
+    role: 'AUCTION_OPERATOR',
+    trackingActions: ['escalate', 'hold'],
+    auctionActions: [
+      'create-auction',
+      'pause-auction',
+      'close-auction',
+      'award-auction',
+      'reject-bid',
+    ],
+    canApproveAssignments: false,
+  },
+  {
+    role: 'EXECUTIVE_STAKEHOLDER',
+    trackingActions: ['escalate'],
+    auctionActions: [],
+    canApproveAssignments: false,
+  },
+  {
+    role: 'ADMIN',
+    trackingActions: ['reroute', 'escalate', 'hold', 'release', 'assign-slot'],
+    auctionActions: [
+      'create-auction',
+      'pause-auction',
+      'close-auction',
+      'award-auction',
+      'reject-bid',
+    ],
+    canApproveAssignments: true,
+  },
+];
+
+export const actionLabels: Record<GovernedAction, string> = {
+  reroute: 'Reroute',
+  escalate: 'Escalate',
+  hold: 'Hold',
+  release: 'Release',
+  'assign-slot': 'Assign Slot',
+  'create-auction': 'Create Auction',
+  'pause-auction': 'Pause Auction',
+  'close-auction': 'Close Auction',
+  'award-auction': 'Award Auction',
+  'reject-bid': 'Reject Bid',
+};
 
 export const getRoleCapability = (role: UserRole): RoleCapability =>
   roleCapabilities.find((capability) => capability.role === role) ?? roleCapabilities[0];

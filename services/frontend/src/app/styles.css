@@ -138,6 +138,301 @@ a {
   margin-bottom: 18px;
 }
 
+.tracking-hero {
+  margin-bottom: 16px;
+}
+
+.access-control-hero {
+  margin-bottom: 16px;
+}
+
+.auctions-hero {
+  margin-bottom: 16px;
+}
+
+.auctions-toolbar {
+  margin-bottom: 16px;
+}
+
+.tab-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.tab-button {
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: white;
+  padding: 9px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, var(--color-emerald), var(--color-cyan));
+  color: white;
+  border-color: transparent;
+}
+
+.auction-filters {
+  align-items: center;
+}
+
+.auction-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.auction-board-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.auction-summary-card {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 14px;
+  background: #f9fbfd;
+  cursor: pointer;
+}
+
+.auction-summary-card.selected,
+.auction-summary-card:hover {
+  border-color: rgba(0, 184, 217, 0.45);
+  background: #effbfe;
+}
+
+.auction-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.auction-metrics span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+
+.auction-detail-card {
+  position: sticky;
+  top: 24px;
+}
+
+.action-button-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.access-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.lower-access-grid {
+  grid-template-columns: 1.2fr 0.9fr;
+}
+
+.governance-form {
+  display: grid;
+  gap: 12px;
+}
+
+textarea {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px;
+  background: white;
+  resize: vertical;
+  font: inherit;
+}
+
+.primary-button,
+.secondary-button {
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.primary-button {
+  background: linear-gradient(135deg, var(--color-emerald), var(--color-cyan));
+  color: white;
+}
+
+.secondary-button {
+  background: white;
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.approval-card,
+.policy-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 14px;
+  background: #f9fbfd;
+}
+
+.approval-card p,
+.policy-card .kpi-label {
+  margin: 8px 0 0;
+}
+
+.approval-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.tracking-toolbar {
+  margin-bottom: 16px;
+}
+
+.tracking-controls {
+  margin-bottom: 12px;
+}
+
+.tracking-controls input {
+  min-width: 320px;
+  flex: 1 1 320px;
+}
+
+.tracking-toolbar-summary {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tracking-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.tracking-table-card {
+  min-width: 0;
+}
+
+.table-scroll {
+  max-height: 560px;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.tracking-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f8fbfe;
+  z-index: 1;
+}
+
+.tracking-table tbody tr {
+  cursor: pointer;
+}
+
+.tracking-table tbody tr:hover,
+.selected-row {
+  background: rgba(0, 184, 217, 0.08);
+}
+
+.tracking-drawer {
+  position: sticky;
+  top: 24px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.detail-item {
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #f9fbfd;
+}
+
+.detail-item span,
+.section-label {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+}
+
+.drawer-section {
+  margin-top: 16px;
+}
+
+.drawer-section p {
+  margin: 0;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.action-summary {
+  border-radius: 10px;
+  background: #effbfe;
+  border: 1px solid rgba(0, 184, 217, 0.18);
+  padding: 12px;
+  color: var(--color-text);
+}
+
+.milestone-list {
+  display: grid;
+  gap: 12px;
+}
+
+.milestone-item {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.milestone-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  margin-top: 4px;
+  background: #cbd5e1;
+}
+
+.milestone-item.completed .milestone-dot {
+  background: var(--color-emerald);
+}
+
+.milestone-item.active .milestone-dot {
+  background: var(--color-orange);
+  box-shadow: 0 0 0 4px rgba(244, 124, 60, 0.15);
+}
+
+.milestone-item.upcoming .milestone-dot {
+  background: var(--color-steel);
+}
+
 .page-subheading {
   margin: 0;
   color: var(--color-muted);
@@ -426,6 +721,21 @@ input {
   .alert-card-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .tracking-layout,
+  .detail-grid,
+  .access-grid,
+  .lower-access-grid,
+  .auction-layout,
+  .action-button-grid,
+  .auction-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .tracking-drawer,
+  .auction-detail-card {
+    position: static;
   }
 
   .topbar {

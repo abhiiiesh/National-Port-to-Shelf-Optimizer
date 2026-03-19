@@ -116,7 +116,7 @@ export function App(): JSX.Element {
             <Route path="/slots" element={<SlotsPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/news" element={<NewsPage />} />
-            <Route path="/access-control" element={<AccessControlPage />} />
+            <Route path="/access-control" element={<AccessControlPage activeRole={role} />} />
             <Route
               path="/unauthorized"
               element={

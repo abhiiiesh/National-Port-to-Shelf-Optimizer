@@ -40,29 +40,34 @@ This document tracks the current product milestone for each application service/
 
 ### 3. Access Control
 
-- **Status**: In progress.
+- **Status**: Completed milestone for mock-first governance workflow.
 - **Delivered**:
   - role model,
   - route access policies,
   - capability matrix,
-  - assignment overview page.
-- **Next milestone**:
-  - role assignment form,
-  - approval workflow states,
+  - assignment overview page,
+  - role assignment request form,
+  - maker-checker approval queue,
   - audit history,
-  - policy mutation integration.
+  - configurable role-action policy matrix.
+- **Next milestone**:
+  - persist governance changes via API,
+  - tenant-aware policy mutation integration,
+  - approval SLAs and notifications.
 
 ### 4. Auctions
 
-- **Status**: In progress.
+- **Status**: Completed milestone for mock-first auction operator workflow.
 - **Delivered**:
-  - route/page scaffold,
-  - baseline mock board.
-- **Next milestone**:
-  - active/closed tabs,
-  - bid details,
+  - status tabs,
+  - simplified corridor/region filters,
+  - bid detail panel,
   - operator actions,
-  - lane drilldown.
+  - session activity log.
+- **Next milestone**:
+  - wire auction lifecycle actions to backend APIs,
+  - lane drilldown with policy-aware controls,
+  - settlement and award confirmation states.
 
 ### 5. Slot Management
 
@@ -143,7 +148,7 @@ This document tracks the current product milestone for each application service/
 
 ## Recommended delivery sequence from here
 
-1. Complete **Access Control** interaction depth.
-2. Complete **Auctions** operator workflow.
-3. Add **real API adapters** page-by-page, starting with Tracking.
-4. Extend **slot management** and **reports** into decision-ready operational workflows.
+1. Add **real API adapters** page-by-page, starting with Tracking, Access Control, and Auctions.
+2. Extend **slot management** into operational planning workflows.
+3. Deepen **reports** into decision-ready operational workflows.
+4. Evolve communications and dashboard widgets into live operational channels.
