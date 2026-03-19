@@ -1,7 +1,14 @@
+export type AuthUserRole =
+  | 'OPERATIONS_MANAGER'
+  | 'PORT_ADMIN'
+  | 'AUCTION_OPERATOR'
+  | 'EXECUTIVE_STAKEHOLDER'
+  | 'ADMIN';
+
 export interface AuthClaims {
   userId: string;
   tenantId: string;
-  roles: Array<'PORT_OPERATOR' | 'RETAILER' | 'LOGISTICS_PARTNER' | 'ADMIN'>;
+  roles: AuthUserRole[];
   scopes: string[];
   exp: number;
 }
@@ -13,11 +20,13 @@ export interface SessionTokenState {
 }
 
 const scopeMap: Record<string, string[]> = {
+  '/dashboard': ['dashboard:read'],
   '/tracking': ['tracking:read'],
   '/slots': ['slots:read'],
   '/auctions': ['auctions:read'],
-  '/analytics': ['metrics:read'],
-  '/admin': ['admin:read'],
+  '/reports': ['reports:read'],
+  '/news': ['news:read'],
+  '/access-control': ['admin:roles'],
 };
 
 export const canAccessPath = (claims: AuthClaims, path: string): boolean => {
