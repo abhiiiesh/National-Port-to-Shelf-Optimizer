@@ -3,7 +3,10 @@ export type AuthUserRole =
   | 'PORT_ADMIN'
   | 'AUCTION_OPERATOR'
   | 'EXECUTIVE_STAKEHOLDER'
-  | 'ADMIN';
+  | 'ADMIN'
+  | 'PORT_OPERATOR'
+  | 'RETAILER'
+  | 'LOGISTICS_PARTNER';
 
 export interface AuthClaims {
   userId: string;
@@ -29,8 +32,19 @@ const scopeMap: Record<string, string[]> = {
   '/access-control': ['admin:roles'],
 };
 
+const legacyScopePathMap: Record<string, string> = {
+  '/admin': '/access-control',
+  '/analytics': '/reports',
+};
+
 export const canAccessPath = (claims: AuthClaims, path: string): boolean => {
-  const requiredScopes = scopeMap[path] ?? [];
+  const resolvedPath = legacyScopePathMap[path] ?? path;
+  const requiredScopes = scopeMap[resolvedPath];
+
+  if (!requiredScopes) {
+    return false;
+  }
+
   return requiredScopes.every((scope) => claims.scopes.includes(scope));
 };
 

@@ -40,7 +40,7 @@ export const appRoutes: AppRoute[] = [
     key: 'tracking-overview',
     path: '/tracking',
     domain: 'tracking',
-    allowedRoles: ['OPERATIONS_MANAGER', 'PORT_ADMIN', 'ADMIN'],
+    allowedRoles: ['OPERATIONS_MANAGER', 'PORT_ADMIN', 'PORT_OPERATOR', 'ADMIN'],
     lazyModule: lazy('features/tracking/overview'),
   },
   {
@@ -54,14 +54,20 @@ export const appRoutes: AppRoute[] = [
     key: 'auction-board',
     path: '/auctions',
     domain: 'auction',
-    allowedRoles: ['AUCTION_OPERATOR', 'OPERATIONS_MANAGER', 'ADMIN'],
+    allowedRoles: ['AUCTION_OPERATOR', 'OPERATIONS_MANAGER', 'LOGISTICS_PARTNER', 'ADMIN'],
     lazyModule: lazy('features/auctions/index'),
   },
   {
     key: 'reports-analytics',
     path: '/reports',
     domain: 'analytics',
-    allowedRoles: ['EXECUTIVE_STAKEHOLDER', 'OPERATIONS_MANAGER', 'PORT_ADMIN', 'ADMIN'],
+    allowedRoles: [
+      'EXECUTIVE_STAKEHOLDER',
+      'OPERATIONS_MANAGER',
+      'PORT_ADMIN',
+      'RETAILER',
+      'ADMIN',
+    ],
     lazyModule: lazy('features/analytics/dashboard'),
   },
   {

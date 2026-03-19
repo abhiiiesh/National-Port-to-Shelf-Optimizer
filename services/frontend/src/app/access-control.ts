@@ -3,7 +3,16 @@ export type UserRole =
   | 'PORT_ADMIN'
   | 'AUCTION_OPERATOR'
   | 'EXECUTIVE_STAKEHOLDER'
-  | 'ADMIN';
+  | 'ADMIN'
+  | 'PORT_OPERATOR'
+  | 'RETAILER'
+  | 'LOGISTICS_PARTNER';
+
+const legacyRoleMap: Record<string, UserRole> = {
+  PORT_OPERATOR: 'OPERATIONS_MANAGER',
+  RETAILER: 'EXECUTIVE_STAKEHOLDER',
+  LOGISTICS_PARTNER: 'AUCTION_OPERATOR',
+};
 
 export interface RoleCapability {
   role: UserRole;
@@ -78,3 +87,5 @@ export const roleAssignments: UserAssignment[] = [
 
 export const getRoleCapability = (role: UserRole): RoleCapability =>
   roleCapabilities.find((capability) => capability.role === role) ?? roleCapabilities[0];
+
+export const normalizeUserRole = (role: UserRole): UserRole => legacyRoleMap[role] ?? role;
