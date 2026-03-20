@@ -33,12 +33,66 @@ a {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 250px 1fr;
+  position: relative;
+}
+
+.app-layout.sidebar-collapsed {
+  grid-template-columns: 0 1fr;
 }
 
 .sidebar {
   background: linear-gradient(180deg, var(--color-navy), #0f345e);
   color: #f2f7ff;
   padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  transition:
+    transform 180ms ease,
+    width 180ms ease,
+    padding 180ms ease,
+    opacity 180ms ease;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.sidebar.collapsed {
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sidebar-toggle,
+.topbar-menu-button {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-radius: 10px;
+  min-width: 40px;
+  min-height: 40px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.topbar-menu-button {
+  color: var(--color-text);
+  border-color: var(--color-border);
+  background: #fff;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  background: rgba(10, 35, 66, 0.38);
+  z-index: 10;
 }
 
 .logo-badge {
@@ -56,7 +110,11 @@ a {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 22px;
+}
+
+.brand-copy.hidden,
+.sidebar-panel.hidden {
+  display: none;
 }
 
 .brand h1 {
@@ -80,6 +138,11 @@ a {
   border-radius: 10px;
   color: #d5e5f8;
   font-weight: 500;
+}
+
+.app-layout.sidebar-collapsed .nav-link {
+  text-align: center;
+  padding-inline: 8px;
 }
 
 .nav-link.active,
@@ -107,6 +170,7 @@ a {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .tag {
@@ -712,7 +776,11 @@ input {
   }
 
   .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(320px, calc(100vw - 32px));
     padding: 16px;
+    box-shadow: 0 14px 32px rgba(10, 35, 66, 0.26);
   }
 
   .section-grid,
@@ -754,6 +822,12 @@ input {
   .action-button-grid button,
   .approval-actions button {
     width: 100%;
+  }
+
+  .topbar-menu-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 

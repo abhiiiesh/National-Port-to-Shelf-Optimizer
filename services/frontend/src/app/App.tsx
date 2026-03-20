@@ -19,6 +19,7 @@ const roleOptions: UserRole[] = [
   'EXECUTIVE_STAKEHOLDER',
   'ADMIN',
 ];
+const SIDEBAR_BREAKPOINT_PX = 1100;
 
 function AccessBoundary({ role }: { role: UserRole }): JSX.Element {
   const location = useLocation();
@@ -60,18 +61,66 @@ function RoleSelector({
 export function App(): JSX.Element {
   const location = useLocation();
   const [role, setRole] = React.useState<UserRole>('OPERATIONS_MANAGER');
+  const [isCompactSidebar, setIsCompactSidebar] = React.useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const allowedNavItems = appRoutes.filter((item) => item.allowedRoles.includes(role));
   const currentCapability = getRoleCapability(role);
 
+  React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const syncSidebarMode = (): void => {
+      const compact = window.innerWidth < SIDEBAR_BREAKPOINT_PX;
+      setIsCompactSidebar(compact);
+      setIsSidebarOpen(!compact);
+    };
+
+    syncSidebarMode();
+    window.addEventListener('resize', syncSidebarMode);
+
+    return () => {
+      window.removeEventListener('resize', syncSidebarMode);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (isCompactSidebar) {
+      setIsSidebarOpen(false);
+    }
+  }, [isCompactSidebar, location.pathname]);
+
   return (
-    <div className="app-layout">
-      <aside className="sidebar">
-        <div className="brand">
-          <BrandLogo />
-          <div>
-            <h1>National Port-to-Shelf</h1>
-            <p>AI Logistics Command Center</p>
+    <div className={`app-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
+      {isCompactSidebar && isSidebarOpen ? (
+        <button
+          aria-label="Close navigation panel"
+          className="sidebar-overlay"
+          type="button"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      ) : null}
+      <aside
+        className={`sidebar ${isSidebarOpen ? 'open' : 'collapsed'} ${isCompactSidebar ? 'compact' : ''}`}
+      >
+        <div className="sidebar-top-row">
+          <div className="brand">
+            <BrandLogo />
+            <div className={`brand-copy ${isSidebarOpen ? '' : 'hidden'}`}>
+              <h1>National Port-to-Shelf</h1>
+              <p>AI Logistics Command Center</p>
+            </div>
           </div>
+          <button
+            aria-label={isSidebarOpen ? 'Collapse navigation panel' : 'Expand navigation panel'}
+            aria-pressed={isSidebarOpen}
+            className="sidebar-toggle"
+            type="button"
+            onClick={() => setIsSidebarOpen((current) => !current)}
+          >
+            <span>{isSidebarOpen ? '←' : '→'}</span>
+          </button>
         </div>
         <nav className="nav-group">
           {allowedNavItems.map((item) => (
@@ -79,17 +128,29 @@ export function App(): JSX.Element {
               className={`nav-link ${location.pathname.startsWith(item.path) ? 'active' : ''}`}
               key={item.path}
               to={item.path}
+              title={
+                item.key === 'admin-console'
+                  ? 'Access Control'
+                  : item.path
+                      .slice(1)
+                      .replace('-', ' ')
+                      .replace(/^./, (c) => c.toUpperCase())
+              }
             >
-              {item.key === 'admin-console'
-                ? 'Access Control'
-                : item.path
-                    .slice(1)
-                    .replace('-', ' ')
-                    .replace(/^./, (c) => c.toUpperCase())}
+              {isSidebarOpen
+                ? item.key === 'admin-console'
+                  ? 'Access Control'
+                  : item.path
+                      .slice(1)
+                      .replace('-', ' ')
+                      .replace(/^./, (c) => c.toUpperCase())
+                : (item.key === 'admin-console' ? 'Access' : item.path.slice(1).replace('-', ' '))
+                    .slice(0, 2)
+                    .toUpperCase()}
             </Link>
           ))}
         </nav>
-        <div className="sidebar-panel">
+        <div className={`sidebar-panel ${isSidebarOpen ? '' : 'hidden'}`}>
           <div className="kpi-label">Role intent</div>
           <strong>{currentCapability.label}</strong>
           <p>{currentCapability.description}</p>
@@ -99,6 +160,14 @@ export function App(): JSX.Element {
       <div className="content">
         <header className="topbar">
           <div className="cluster">
+            <button
+              aria-label={isSidebarOpen ? 'Collapse navigation panel' : 'Expand navigation panel'}
+              className="topbar-menu-button"
+              type="button"
+              onClick={() => setIsSidebarOpen((current) => !current)}
+            >
+              ☰
+            </button>
             <span className="tag good">Staging Live</span>
             <span className="tag">API Connectivity: Healthy</span>
             <span className="tag">Notifications: 2</span>
