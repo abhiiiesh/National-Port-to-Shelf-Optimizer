@@ -1,5 +1,7 @@
 import React from 'react';
 import { trackingRecords, type TrackingRecord } from '../mock-data';
+import { fetchVessels } from '../../shared/api-client';
+import { mergeTrackingRecords } from '../../features/tracking/records';
 
 const statusOptions = ['All statuses', 'On Track', 'Delay Risk', 'Escalated'] as const;
 const modeOptions = ['All modes', 'Rail', 'Road', 'Inland'] as const;
@@ -21,6 +23,10 @@ const badgeClassForStatus = (status: TrackingRecord['status']): string => {
 };
 
 export function TrackingPage(): JSX.Element {
+  const [records, setRecords] = React.useState<TrackingRecord[]>(trackingRecords);
+  const [dataSource, setDataSource] = React.useState<'mock' | 'live'>('mock');
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [loadMessage, setLoadMessage] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState('');
   const [statusFilter, setStatusFilter] =
     React.useState<(typeof statusOptions)[number]>('All statuses');
@@ -29,10 +35,39 @@ export function TrackingPage(): JSX.Element {
     React.useState<(typeof priorityOptions)[number]>('All priorities');
   const [selectedRecordId, setSelectedRecordId] = React.useState(trackingRecords[0]?.id ?? '');
 
+  const hydrateLiveTracking = React.useCallback(async () => {
+    setIsLoading(true);
+    setLoadMessage(null);
+
+    try {
+      const vessels = await fetchVessels();
+      const mergedRecords = mergeTrackingRecords(vessels);
+      setRecords(mergedRecords);
+      setDataSource('live');
+      setSelectedRecordId(mergedRecords[0]?.id ?? '');
+      setLoadMessage(`Live tracking feed connected · ${mergedRecords.length} records synced.`);
+    } catch (error) {
+      setRecords(trackingRecords);
+      setDataSource('mock');
+      setSelectedRecordId(trackingRecords[0]?.id ?? '');
+      setLoadMessage(
+        error instanceof Error
+          ? `Live tracking feed unavailable, showing responsive mock fallback. ${error.message}`
+          : 'Live tracking feed unavailable, showing responsive mock fallback.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void hydrateLiveTracking();
+  }, [hydrateLiveTracking]);
+
   const filteredRecords = React.useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return trackingRecords.filter((record) => {
+    return records.filter((record) => {
       const matchesQuery =
         normalizedQuery.length === 0 ||
         [record.id, record.containerId, record.vessel, record.route, record.terminal, record.owner]
@@ -47,7 +82,7 @@ export function TrackingPage(): JSX.Element {
         matchesOption(record.priority, priorityFilter, 'All priorities')
       );
     });
-  }, [modeFilter, priorityFilter, query, statusFilter]);
+  }, [modeFilter, priorityFilter, query, records, statusFilter]);
 
   const selectedRecord =
     filteredRecords.find((record) => record.id === selectedRecordId) ?? filteredRecords[0] ?? null;
@@ -77,7 +112,11 @@ export function TrackingPage(): JSX.Element {
           <div className="hero-status-value">
             Search, filters, sticky grid, drawer, and timeline live
           </div>
-          <div className="kpi-trend up">Mock-first UX is now ready for API adapter wiring</div>
+          <div className="kpi-trend up">
+            {dataSource === 'live'
+              ? 'Tracking API adapter is active with dynamic operator data'
+              : 'Mock fallback stays available when live tracking is unavailable'}
+          </div>
         </div>
       </div>
 
@@ -123,13 +162,25 @@ export function TrackingPage(): JSX.Element {
               </option>
             ))}
           </select>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => void hydrateLiveTracking()}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Refreshing…' : 'Refresh live feed'}
+          </button>
         </div>
         <div className="tracking-toolbar-summary">
+          <span className={`tag ${dataSource === 'live' ? 'good' : ''}`}>
+            Source: {dataSource === 'live' ? 'Live API' : 'Mock fallback'}
+          </span>
           <span className="tag">Visible records: {filteredRecords.length}</span>
           <span className="tag">
             High priority: {filteredRecords.filter((record) => record.priority === 'High').length}
           </span>
         </div>
+        {loadMessage ? <div className="notice compact-notice">{loadMessage}</div> : null}
       </div>
 
       <div className="tracking-layout">
