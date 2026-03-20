@@ -1,5 +1,7 @@
 import React from 'react';
 import { auctionRecords, type AuctionRecord } from '../mock-data';
+import { fetchAuctions } from '../../shared/api-client';
+import { mergeAuctionRecords } from '../../features/auctions/records';
 
 type AuctionTab = 'All' | 'Active' | 'Closing' | 'Closed';
 
@@ -21,6 +23,10 @@ const badgeToneForAuction = (status: AuctionRecord['status']): string => {
 };
 
 export function AuctionsPage(): JSX.Element {
+  const [records, setRecords] = React.useState<AuctionRecord[]>(auctionRecords);
+  const [dataSource, setDataSource] = React.useState<'mock' | 'live'>('mock');
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [loadMessage, setLoadMessage] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<AuctionTab>('All');
   const [regionFilter, setRegionFilter] = React.useState<(typeof regions)[number]>('All regions');
   const [corridorFilter, setCorridorFilter] =
@@ -30,8 +36,37 @@ export function AuctionsPage(): JSX.Element {
     'Auction Desk initialized operator workspace.',
   ]);
 
+  const hydrateLiveAuctions = React.useCallback(async () => {
+    setIsLoading(true);
+    setLoadMessage(null);
+
+    try {
+      const feeds = await fetchAuctions();
+      const mergedRecords = mergeAuctionRecords(feeds);
+      setRecords(mergedRecords);
+      setDataSource('live');
+      setSelectedAuctionId(mergedRecords[0]?.id ?? '');
+      setLoadMessage(`Live auction feed connected · ${mergedRecords.length} auctions synced.`);
+    } catch (error) {
+      setRecords(auctionRecords);
+      setDataSource('mock');
+      setSelectedAuctionId(auctionRecords[0]?.id ?? '');
+      setLoadMessage(
+        error instanceof Error
+          ? `Live auction feed unavailable, showing responsive mock fallback. ${error.message}`
+          : 'Live auction feed unavailable, showing responsive mock fallback.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void hydrateLiveAuctions();
+  }, [hydrateLiveAuctions]);
+
   const filteredAuctions = React.useMemo(() => {
-    return auctionRecords.filter((auction) => {
+    return records.filter((auction) => {
       const matchesTab = tab === 'All' || auction.status === tab;
       const matchesRegion = regionFilter === 'All regions' || auction.region === regionFilter;
       const matchesCorridor =
@@ -39,7 +74,7 @@ export function AuctionsPage(): JSX.Element {
 
       return matchesTab && matchesRegion && matchesCorridor;
     });
-  }, [corridorFilter, regionFilter, tab]);
+  }, [corridorFilter, records, regionFilter, tab]);
 
   const selectedAuction =
     filteredAuctions.find((auction) => auction.id === selectedAuctionId) ??
@@ -77,7 +112,9 @@ export function AuctionsPage(): JSX.Element {
           <div className="kpi-label">Auction milestone</div>
           <div className="hero-status-value">Operator workflow board is now live</div>
           <div className="kpi-trend up">
-            Auctions milestone achieved · next step is API adapter replacement
+            {dataSource === 'live'
+              ? 'Auction API adapter is active with dynamic operator data'
+              : 'Mock fallback stays available when live auction data is unavailable'}
           </div>
         </div>
       </div>
@@ -118,8 +155,20 @@ export function AuctionsPage(): JSX.Element {
               </option>
             ))}
           </select>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => void hydrateLiveAuctions()}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Refreshing…' : 'Refresh live feed'}
+          </button>
+          <span className={`tag ${dataSource === 'live' ? 'good' : ''}`}>
+            Source: {dataSource === 'live' ? 'Live API' : 'Mock fallback'}
+          </span>
           <span className="tag">Visible auctions: {filteredAuctions.length}</span>
         </div>
+        {loadMessage ? <div className="notice compact-notice">{loadMessage}</div> : null}
       </div>
 
       <div className="auction-layout">

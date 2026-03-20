@@ -1,5 +1,7 @@
 import {
+  type FrontendAuctionFeed,
   isApiErrorEnvelope,
+  isFrontendAuctionFeed,
   type FrontendPerformanceSnapshot,
   type FrontendVesselSummary,
   isFrontendPerformanceSnapshot,
@@ -48,6 +50,15 @@ export const fetchPerformance = async (): Promise<FrontendPerformanceSnapshot> =
   const payload = await fetchJson('/api/v1/metrics/performance');
   if (!isFrontendPerformanceSnapshot(payload)) {
     throw new Error('Contract validation failed for performance payload');
+  }
+
+  return payload;
+};
+
+export const fetchAuctions = async (): Promise<FrontendAuctionFeed[]> => {
+  const payload = await fetchJson('/api/v1/auctions');
+  if (!Array.isArray(payload) || !payload.every(isFrontendAuctionFeed)) {
+    throw new Error('Contract validation failed for auctions payload');
   }
 
   return payload;
