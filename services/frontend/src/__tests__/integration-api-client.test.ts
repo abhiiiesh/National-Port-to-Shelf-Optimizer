@@ -13,6 +13,7 @@ describe('frontend integration tests: typed API client', () => {
 
   it('maps vessel endpoint response through contract guards', async () => {
     global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
       json: async () => [
         {
           vesselId: 'v-1',
@@ -25,11 +26,14 @@ describe('frontend integration tests: typed API client', () => {
 
     const vessels = await fetchVessels();
     expect(vessels[0].vesselId).toBe('v-1');
-    expect(global.fetch).toHaveBeenCalledWith('http://gateway.local/api/v1/vessels');
+    expect(global.fetch).toHaveBeenCalledWith('http://gateway.local/api/v1/vessels', {
+      headers: undefined,
+    });
   });
 
   it('maps performance endpoint response through contract guards', async () => {
     global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
       json: async () => ({
         totalShipments: 120,
         delayedShipments: 10,
@@ -39,11 +43,14 @@ describe('frontend integration tests: typed API client', () => {
 
     const snapshot = await fetchPerformance();
     expect(snapshot.totalShipments).toBe(120);
-    expect(global.fetch).toHaveBeenCalledWith('http://gateway.local/api/v1/metrics/performance');
+    expect(global.fetch).toHaveBeenCalledWith('http://gateway.local/api/v1/metrics/performance', {
+      headers: undefined,
+    });
   });
 
   it('throws when endpoint payload breaks contract', async () => {
     global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
       json: async () => ({ invalid: true }),
     } as Response);
 
