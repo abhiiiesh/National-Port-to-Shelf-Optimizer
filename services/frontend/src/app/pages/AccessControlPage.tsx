@@ -1,5 +1,6 @@
 import React from 'react';
-import { fetchAuthValidation } from '../../shared/api-client';
+import { fetchAuthValidation, loginToAuthService } from '../../shared/api-client';
+import { clearStoredAccessToken, setStoredAccessToken } from '../../config/session';
 import {
   actionLabels,
   getRoleCapability,
@@ -44,6 +45,11 @@ export function AccessControlPage({
   const [authSummary, setAuthSummary] = React.useState<string>(
     'Live auth validation unavailable; governance workflow is using responsive mock fallback.'
   );
+  const [authForm, setAuthForm] = React.useState({
+    username: 'admin',
+    password: 'admin123',
+  });
+  const [authBusy, setAuthBusy] = React.useState(false);
   const [requests, setRequests] = React.useState<AccessRequest[]>(initialAccessRequests);
   const [auditEntries, setAuditEntries] = React.useState<AuditEntry[]>(initialAuditEntries);
   const [formState, setFormState] = React.useState({
@@ -58,42 +64,29 @@ export function AccessControlPage({
   const isAdminApprover = activeRole === 'ADMIN';
   const pendingRequests = requests.filter((request) => request.status === 'Pending Approval');
 
-  React.useEffect(() => {
-    let isMounted = true;
+  const hydrateAuthValidation = React.useCallback(async (): Promise<void> => {
+    try {
+      const validation = await fetchAuthValidation();
 
-    const hydrateAuthValidation = async (): Promise<void> => {
-      try {
-        const validation = await fetchAuthValidation();
-        if (!isMounted) {
-          return;
-        }
-
-        setAuthSource('live');
-        setAuthSummary(
-          validation.valid
-            ? `Live auth validation active for ${validation.userId ?? 'current session'} · roles: ${(validation.roles ?? []).join(', ') || 'none reported'}`
-            : 'Live auth validation reached the backend, but the current session is not valid.'
-        );
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-
-        setAuthSource('mock');
-        setAuthSummary(
-          error instanceof Error
-            ? `Live auth validation unavailable; governance workflow is using responsive mock fallback. ${error.message}`
-            : 'Live auth validation unavailable; governance workflow is using responsive mock fallback.'
-        );
-      }
-    };
-
-    void hydrateAuthValidation();
-
-    return () => {
-      isMounted = false;
-    };
+      setAuthSource('live');
+      setAuthSummary(
+        validation.valid
+          ? `Live auth validation active for ${validation.userId ?? 'current session'} · roles: ${(validation.roles ?? []).join(', ') || 'none reported'}`
+          : 'Live auth validation reached the backend, but the current session is not valid.'
+      );
+    } catch (error) {
+      setAuthSource('mock');
+      setAuthSummary(
+        error instanceof Error
+          ? `Live auth validation unavailable; governance workflow is using responsive mock fallback. ${error.message}`
+          : 'Live auth validation unavailable; governance workflow is using responsive mock fallback.'
+      );
+    }
   }, []);
+
+  React.useEffect(() => {
+    void hydrateAuthValidation();
+  }, [hydrateAuthValidation]);
 
   const submitRequest = (event: React.FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -151,6 +144,31 @@ export function AccessControlPage({
     ]);
   };
 
+  const loginSession = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault();
+    setAuthBusy(true);
+
+    try {
+      const token = await loginToAuthService(authForm.username, authForm.password);
+      setStoredAccessToken(token.accessToken);
+      await hydrateAuthValidation();
+      setAuthSummary(
+        `Live auth session bootstrapped for ${token.userId} · roles: ${token.roles.join(', ') || 'none reported'}`
+      );
+      setAuthSource('live');
+    } catch (error) {
+      clearStoredAccessToken();
+      setAuthSource('mock');
+      setAuthSummary(
+        error instanceof Error
+          ? `Unable to bootstrap live auth session. ${error.message}`
+          : 'Unable to bootstrap live auth session.'
+      );
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
   return (
     <section>
       <div className="page-hero access-control-hero">
@@ -188,6 +206,49 @@ export function AccessControlPage({
 
       <div className="access-grid">
         <article className="card">
+          <h3>Live Auth Session Bootstrap</h3>
+          <form
+            className="governance-form"
+            onSubmit={(event) => {
+              void loginSession(event);
+            }}
+            style={{ marginBottom: '16px' }}
+          >
+            <input
+              required
+              placeholder="Username"
+              value={authForm.username}
+              onChange={(event) =>
+                setAuthForm((current) => ({ ...current, username: event.target.value }))
+              }
+            />
+            <input
+              required
+              placeholder="Password"
+              type="password"
+              value={authForm.password}
+              onChange={(event) =>
+                setAuthForm((current) => ({ ...current, password: event.target.value }))
+              }
+            />
+            <div className="approval-actions">
+              <button className="primary-button" disabled={authBusy} type="submit">
+                {authBusy ? 'Signing in…' : 'Sign in to auth service'}
+              </button>
+              <button
+                className="secondary-button"
+                disabled={authBusy}
+                type="button"
+                onClick={() => {
+                  clearStoredAccessToken();
+                  void hydrateAuthValidation();
+                }}
+              >
+                Clear stored session
+              </button>
+            </div>
+          </form>
+
           <h3>Submit Role Assignment Request</h3>
           <form className="governance-form" onSubmit={submitRequest}>
             <input

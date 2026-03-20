@@ -1,8 +1,10 @@
 import {
+  clearStoredAccessToken,
   FRONTEND_ACCESS_TOKEN_STORAGE_KEY,
   FRONTEND_SIDEBAR_COLLAPSED_STORAGE_KEY,
   getStoredAccessToken,
   getStoredSidebarCollapsed,
+  setStoredAccessToken,
   setStoredSidebarCollapsed,
 } from '../config/session';
 
@@ -14,6 +16,9 @@ const createWindowMock = () => {
       getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => {
         storage.set(key, value);
+      },
+      removeItem: (key: string) => {
+        storage.delete(key);
       },
       clear: () => {
         storage.clear();
@@ -43,6 +48,16 @@ describe('frontend auth token storage', () => {
   it('returns null when no token is stored', () => {
     global.window = createWindowMock() as Window & typeof globalThis;
 
+    expect(getStoredAccessToken()).toBeNull();
+  });
+
+  it('stores and clears the access token', () => {
+    global.window = createWindowMock() as Window & typeof globalThis;
+
+    setStoredAccessToken('live-token');
+    expect(getStoredAccessToken()).toBe('live-token');
+
+    clearStoredAccessToken();
     expect(getStoredAccessToken()).toBeNull();
   });
 

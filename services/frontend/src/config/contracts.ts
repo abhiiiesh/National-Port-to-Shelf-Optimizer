@@ -54,6 +54,14 @@ export interface FrontendAuthValidation {
   roles?: string[];
 }
 
+export interface FrontendAuthToken {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  userId: string;
+  roles: string[];
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
@@ -157,5 +165,20 @@ export const isFrontendAuthValidation = (value: unknown): value is FrontendAuthV
     (value.userId === undefined || typeof value.userId === 'string') &&
     (value.roles === undefined ||
       (Array.isArray(value.roles) && value.roles.every((role) => typeof role === 'string')))
+  );
+};
+
+export const isFrontendAuthToken = (value: unknown): value is FrontendAuthToken => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.accessToken === 'string' &&
+    typeof value.refreshToken === 'string' &&
+    typeof value.expiresIn === 'number' &&
+    typeof value.userId === 'string' &&
+    Array.isArray(value.roles) &&
+    value.roles.every((role) => typeof role === 'string')
   );
 };

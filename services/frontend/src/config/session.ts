@@ -9,6 +9,22 @@ export const getStoredAccessToken = (): string | null => {
   return window.localStorage.getItem(FRONTEND_ACCESS_TOKEN_STORAGE_KEY);
 };
 
+export const setStoredAccessToken = (token: string): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.setItem(FRONTEND_ACCESS_TOKEN_STORAGE_KEY, token);
+};
+
+export const clearStoredAccessToken = (): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.removeItem(FRONTEND_ACCESS_TOKEN_STORAGE_KEY);
+};
+
 export const getStoredSidebarCollapsed = (): boolean | null => {
   if (typeof window === 'undefined') {
     return null;

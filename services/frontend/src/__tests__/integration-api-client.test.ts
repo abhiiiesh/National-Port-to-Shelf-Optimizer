@@ -1,4 +1,9 @@
-import { fetchAuthValidation, fetchPerformance, fetchVessels } from '../shared/api-client';
+import {
+  fetchAuthValidation,
+  fetchPerformance,
+  fetchVessels,
+  loginToAuthService,
+} from '../shared/api-client';
 
 describe('frontend integration tests: typed API client', () => {
   const originalFetch = global.fetch;
@@ -71,6 +76,29 @@ describe('frontend integration tests: typed API client', () => {
     expect(validation.valid).toBe(true);
     expect(global.fetch).toHaveBeenCalledWith('http://gateway.local/auth/validate', {
       headers: undefined,
+    });
+  });
+
+  it('maps auth login endpoint response through contract guards', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        accessToken: 'token-1',
+        refreshToken: 'refresh-1',
+        expiresIn: 3600,
+        userId: 'user-1',
+        roles: ['ADMIN'],
+      }),
+    } as Response);
+
+    const token = await loginToAuthService('admin', 'admin123');
+    expect(token.userId).toBe('user-1');
+    expect(global.fetch).toHaveBeenCalledWith('http://gateway.local/auth/login', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ username: 'admin', password: 'admin123' }),
     });
   });
 });

@@ -1,8 +1,10 @@
 import {
   type FrontendAuctionFeed,
+  type FrontendAuthToken,
   type FrontendAuthValidation,
   isApiErrorEnvelope,
   isFrontendAuctionFeed,
+  isFrontendAuthToken,
   isFrontendAuthValidation,
   type FrontendPerformanceSnapshot,
   type FrontendVesselSummary,
@@ -17,14 +19,23 @@ const buildUrl = (path: string): string => {
   return `${env.apiGatewayBaseUrl}${path}`;
 };
 
-const fetchJson = async (path: string): Promise<unknown> => {
-  const token = getStoredAccessToken();
-  const response = await fetch(buildUrl(path), {
-    headers: token
+const fetchJson = async (
+  path: string,
+  init: RequestInit = {},
+  includeStoredAuth = true
+): Promise<unknown> => {
+  const token = includeStoredAuth ? getStoredAccessToken() : null;
+  const headers = {
+    ...(init.headers ?? {}),
+    ...(token
       ? {
           authorization: `Bearer ${token}`,
         }
-      : undefined,
+      : {}),
+  };
+  const response = await fetch(buildUrl(path), {
+    ...init,
+    headers: Object.keys(headers).length > 0 ? headers : undefined,
   });
   const payload = (await response.json()) as unknown;
 
@@ -70,6 +81,28 @@ export const fetchAuthValidation = async (): Promise<FrontendAuthValidation> => 
   const payload = await fetchJson('/auth/validate');
   if (!isFrontendAuthValidation(payload)) {
     throw new Error('Contract validation failed for auth validation payload');
+  }
+
+  return payload;
+};
+
+export const loginToAuthService = async (
+  username: string,
+  password: string
+): Promise<FrontendAuthToken> => {
+  const payload = await fetchJson(
+    '/auth/login',
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ username, password }),
+    },
+    false
+  );
+  if (!isFrontendAuthToken(payload)) {
+    throw new Error('Contract validation failed for auth login payload');
   }
 
   return payload;
