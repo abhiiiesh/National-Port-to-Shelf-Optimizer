@@ -1,4 +1,4 @@
-import { fetchPerformance, fetchVessels } from '../shared/api-client';
+import { fetchAuthValidation, fetchPerformance, fetchVessels } from '../shared/api-client';
 
 describe('frontend integration tests: typed API client', () => {
   const originalFetch = global.fetch;
@@ -55,5 +55,22 @@ describe('frontend integration tests: typed API client', () => {
     } as Response);
 
     await expect(fetchPerformance()).rejects.toThrow('Contract validation failed');
+  });
+
+  it('maps auth validation endpoint response through contract guards', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        valid: true,
+        userId: 'user-1',
+        roles: ['ADMIN'],
+      }),
+    } as Response);
+
+    const validation = await fetchAuthValidation();
+    expect(validation.valid).toBe(true);
+    expect(global.fetch).toHaveBeenCalledWith('http://gateway.local/auth/validate', {
+      headers: undefined,
+    });
   });
 });

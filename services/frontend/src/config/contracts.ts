@@ -48,6 +48,12 @@ export interface FrontendAuctionFeed {
   bids: FrontendAuctionBid[];
 }
 
+export interface FrontendAuthValidation {
+  valid: boolean;
+  userId?: string;
+  roles?: string[];
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
@@ -139,5 +145,17 @@ export const isFrontendAuctionFeed = (value: unknown): value is FrontendAuctionF
     value.slots.every(isFrontendAuctionSlot) &&
     Array.isArray(value.bids) &&
     value.bids.every(isFrontendAuctionBid)
+  );
+};
+
+export const isFrontendAuthValidation = (value: unknown): value is FrontendAuthValidation => {
+  if (!isRecord(value) || typeof value.valid !== 'boolean') {
+    return false;
+  }
+
+  return (
+    (value.userId === undefined || typeof value.userId === 'string') &&
+    (value.roles === undefined ||
+      (Array.isArray(value.roles) && value.roles.every((role) => typeof role === 'string')))
   );
 };

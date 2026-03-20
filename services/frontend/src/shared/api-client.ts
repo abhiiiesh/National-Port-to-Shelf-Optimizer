@@ -1,7 +1,9 @@
 import {
   type FrontendAuctionFeed,
+  type FrontendAuthValidation,
   isApiErrorEnvelope,
   isFrontendAuctionFeed,
+  isFrontendAuthValidation,
   type FrontendPerformanceSnapshot,
   type FrontendVesselSummary,
   isFrontendPerformanceSnapshot,
@@ -59,6 +61,15 @@ export const fetchAuctions = async (): Promise<FrontendAuctionFeed[]> => {
   const payload = await fetchJson('/api/v1/auctions');
   if (!Array.isArray(payload) || !payload.every(isFrontendAuctionFeed)) {
     throw new Error('Contract validation failed for auctions payload');
+  }
+
+  return payload;
+};
+
+export const fetchAuthValidation = async (): Promise<FrontendAuthValidation> => {
+  const payload = await fetchJson('/auth/validate');
+  if (!isFrontendAuthValidation(payload)) {
+    throw new Error('Contract validation failed for auth validation payload');
   }
 
   return payload;

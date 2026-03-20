@@ -1,6 +1,9 @@
 import {
   FRONTEND_ACCESS_TOKEN_STORAGE_KEY,
+  FRONTEND_SIDEBAR_COLLAPSED_STORAGE_KEY,
   getStoredAccessToken,
+  getStoredSidebarCollapsed,
+  setStoredSidebarCollapsed,
 } from '../config/session';
 
 const createWindowMock = () => {
@@ -41,5 +44,16 @@ describe('frontend auth token storage', () => {
     global.window = createWindowMock() as Window & typeof globalThis;
 
     expect(getStoredAccessToken()).toBeNull();
+  });
+
+  it('persists and reads the sidebar collapsed preference', () => {
+    global.window = createWindowMock() as Window & typeof globalThis;
+
+    setStoredSidebarCollapsed(true);
+
+    expect(
+      global.window.localStorage.getItem(FRONTEND_SIDEBAR_COLLAPSED_STORAGE_KEY)
+    ).toBe('true');
+    expect(getStoredSidebarCollapsed()).toBe(true);
   });
 });

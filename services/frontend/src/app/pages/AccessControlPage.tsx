@@ -1,4 +1,5 @@
 import React from 'react';
+import { fetchAuthValidation } from '../../shared/api-client';
 import {
   actionLabels,
   getRoleCapability,
@@ -39,6 +40,10 @@ export function AccessControlPage({
 }: {
   activeRole?: UserRole;
 }): JSX.Element {
+  const [authSource, setAuthSource] = React.useState<'mock' | 'live'>('mock');
+  const [authSummary, setAuthSummary] = React.useState<string>(
+    'Live auth validation unavailable; governance workflow is using responsive mock fallback.'
+  );
   const [requests, setRequests] = React.useState<AccessRequest[]>(initialAccessRequests);
   const [auditEntries, setAuditEntries] = React.useState<AuditEntry[]>(initialAuditEntries);
   const [formState, setFormState] = React.useState({
@@ -52,6 +57,43 @@ export function AccessControlPage({
 
   const isAdminApprover = activeRole === 'ADMIN';
   const pendingRequests = requests.filter((request) => request.status === 'Pending Approval');
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const hydrateAuthValidation = async (): Promise<void> => {
+      try {
+        const validation = await fetchAuthValidation();
+        if (!isMounted) {
+          return;
+        }
+
+        setAuthSource('live');
+        setAuthSummary(
+          validation.valid
+            ? `Live auth validation active for ${validation.userId ?? 'current session'} · roles: ${(validation.roles ?? []).join(', ') || 'none reported'}`
+            : 'Live auth validation reached the backend, but the current session is not valid.'
+        );
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setAuthSource('mock');
+        setAuthSummary(
+          error instanceof Error
+            ? `Live auth validation unavailable; governance workflow is using responsive mock fallback. ${error.message}`
+            : 'Live auth validation unavailable; governance workflow is using responsive mock fallback.'
+        );
+      }
+    };
+
+    void hydrateAuthValidation();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const submitRequest = (event: React.FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -123,9 +165,11 @@ export function AccessControlPage({
           <div className="kpi-label">Approval model</div>
           <div className="hero-status-value">Maker-checker workflow enabled</div>
           <div className="kpi-trend up">
-            {isAdminApprover
-              ? 'You can approve or reject requests as Platform Admin.'
-              : 'You can submit requests, but approval is restricted to Platform Admin.'}
+            {authSource === 'live'
+              ? authSummary
+              : isAdminApprover
+                ? 'You can approve or reject requests as Platform Admin.'
+                : 'You can submit requests, but approval is restricted to Platform Admin.'}
           </div>
         </div>
       </div>
@@ -133,6 +177,13 @@ export function AccessControlPage({
       <div className="notice">
         Approval authority is <strong>ADMIN only</strong>. Port Admin users can create requests but
         cannot finalize approvals.
+      </div>
+
+      <div className="tracking-toolbar-summary" style={{ marginBottom: '16px' }}>
+        <span className={`tag ${authSource === 'live' ? 'good' : ''}`}>
+          Source: {authSource === 'live' ? 'Live auth service' : 'Mock governance fallback'}
+        </span>
+        <span className="tag">{authSummary}</span>
       </div>
 
       <div className="access-grid">

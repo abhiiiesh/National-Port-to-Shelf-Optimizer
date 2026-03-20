@@ -11,6 +11,7 @@ import { AuctionsPage } from './pages/AuctionsPage';
 import { SlotsPage } from './pages/SlotsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { NewsPage } from './pages/NewsPage';
+import { getStoredSidebarCollapsed, setStoredSidebarCollapsed } from '../config/session';
 
 const roleOptions: UserRole[] = [
   'OPERATIONS_MANAGER',
@@ -20,6 +21,15 @@ const roleOptions: UserRole[] = [
   'ADMIN',
 ];
 const SIDEBAR_BREAKPOINT_PX = 1100;
+const navIcons: Record<string, string> = {
+  '/dashboard': '⌂',
+  '/tracking': '◎',
+  '/slots': '▣',
+  '/auctions': '◌',
+  '/reports': '▤',
+  '/news': '✦',
+  '/access-control': '⚙',
+};
 
 function AccessBoundary({ role }: { role: UserRole }): JSX.Element {
   const location = useLocation();
@@ -73,8 +83,9 @@ export function App(): JSX.Element {
 
     const syncSidebarMode = (): void => {
       const compact = window.innerWidth < SIDEBAR_BREAKPOINT_PX;
+      const persistedCollapsed = getStoredSidebarCollapsed();
       setIsCompactSidebar(compact);
-      setIsSidebarOpen(!compact);
+      setIsSidebarOpen(compact ? false : !(persistedCollapsed ?? false));
     };
 
     syncSidebarMode();
@@ -86,13 +97,32 @@ export function App(): JSX.Element {
   }, []);
 
   React.useEffect(() => {
+    if (!isCompactSidebar) {
+      setStoredSidebarCollapsed(!isSidebarOpen);
+    }
+  }, [isCompactSidebar, isSidebarOpen]);
+
+  React.useEffect(() => {
     if (isCompactSidebar) {
       setIsSidebarOpen(false);
     }
   }, [isCompactSidebar, location.pathname]);
 
+  const toggleSidebar = (): void => {
+    setIsSidebarOpen((current) => {
+      const next = !current;
+      if (!isCompactSidebar) {
+        setStoredSidebarCollapsed(!next);
+      }
+
+      return next;
+    });
+  };
+
   return (
-    <div className={`app-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
+    <div
+      className={`app-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'} ${isCompactSidebar ? 'sidebar-compact-mode' : ''}`}
+    >
       {isCompactSidebar && isSidebarOpen ? (
         <button
           aria-label="Close navigation panel"
@@ -117,7 +147,7 @@ export function App(): JSX.Element {
             aria-pressed={isSidebarOpen}
             className="sidebar-toggle"
             type="button"
-            onClick={() => setIsSidebarOpen((current) => !current)}
+            onClick={toggleSidebar}
           >
             <span>{isSidebarOpen ? '←' : '→'}</span>
           </button>
@@ -137,16 +167,19 @@ export function App(): JSX.Element {
                       .replace(/^./, (c) => c.toUpperCase())
               }
             >
-              {isSidebarOpen
-                ? item.key === 'admin-console'
-                  ? 'Access Control'
-                  : item.path
-                      .slice(1)
-                      .replace('-', ' ')
-                      .replace(/^./, (c) => c.toUpperCase())
-                : (item.key === 'admin-console' ? 'Access' : item.path.slice(1).replace('-', ' '))
-                    .slice(0, 2)
-                    .toUpperCase()}
+              <span className="nav-icon" aria-hidden="true">
+                {navIcons[item.path] ?? '•'}
+              </span>
+              {isSidebarOpen ? (
+                <span className="nav-label">
+                  {item.key === 'admin-console'
+                    ? 'Access Control'
+                    : item.path
+                        .slice(1)
+                        .replace('-', ' ')
+                        .replace(/^./, (c) => c.toUpperCase())}
+                </span>
+              ) : null}
             </Link>
           ))}
         </nav>
@@ -164,7 +197,7 @@ export function App(): JSX.Element {
               aria-label={isSidebarOpen ? 'Collapse navigation panel' : 'Expand navigation panel'}
               className="topbar-menu-button"
               type="button"
-              onClick={() => setIsSidebarOpen((current) => !current)}
+              onClick={toggleSidebar}
             >
               ☰
             </button>
