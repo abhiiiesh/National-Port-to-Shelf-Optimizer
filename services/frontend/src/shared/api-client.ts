@@ -1,10 +1,12 @@
 import {
   type FrontendAuctionFeed,
   type FrontendAuthToken,
+  type FrontendAuthUser,
   type FrontendAuthValidation,
   isApiErrorEnvelope,
   isFrontendAuctionFeed,
   isFrontendAuthToken,
+  isFrontendAuthUser,
   isFrontendAuthValidation,
   type FrontendPerformanceSnapshot,
   type FrontendVesselSummary,
@@ -103,6 +105,29 @@ export const loginToAuthService = async (
   );
   if (!isFrontendAuthToken(payload)) {
     throw new Error('Contract validation failed for auth login payload');
+  }
+
+  return payload;
+};
+
+export const registerAuthUser = async (
+  username: string,
+  password: string,
+  roles: string[]
+): Promise<FrontendAuthUser> => {
+  const payload = await fetchJson(
+    '/auth/register',
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ username, password, roles }),
+    },
+    false
+  );
+  if (!isFrontendAuthUser(payload)) {
+    throw new Error('Contract validation failed for auth register payload');
   }
 
   return payload;

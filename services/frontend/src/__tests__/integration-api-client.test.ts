@@ -3,6 +3,7 @@ import {
   fetchPerformance,
   fetchVessels,
   loginToAuthService,
+  registerAuthUser,
 } from '../shared/api-client';
 
 describe('frontend integration tests: typed API client', () => {
@@ -99,6 +100,33 @@ describe('frontend integration tests: typed API client', () => {
         'content-type': 'application/json',
       },
       body: JSON.stringify({ username: 'admin', password: 'admin123' }),
+    });
+  });
+
+  it('maps auth register endpoint response through contract guards', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        id: 'user-2',
+        username: 'port_user',
+        roles: ['PORT_OPERATOR'],
+        createdAt: '2026-03-20T00:00:00.000Z',
+        updatedAt: '2026-03-20T00:00:00.000Z',
+      }),
+    } as Response);
+
+    const user = await registerAuthUser('port_user', 'temp123', ['PORT_OPERATOR']);
+    expect(user.id).toBe('user-2');
+    expect(global.fetch).toHaveBeenCalledWith('http://gateway.local/auth/register', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: 'port_user',
+        password: 'temp123',
+        roles: ['PORT_OPERATOR'],
+      }),
     });
   });
 });

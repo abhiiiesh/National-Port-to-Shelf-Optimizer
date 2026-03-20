@@ -62,6 +62,14 @@ export interface FrontendAuthToken {
   roles: string[];
 }
 
+export interface FrontendAuthUser {
+  id: string;
+  username: string;
+  roles: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
@@ -180,5 +188,20 @@ export const isFrontendAuthToken = (value: unknown): value is FrontendAuthToken 
     typeof value.userId === 'string' &&
     Array.isArray(value.roles) &&
     value.roles.every((role) => typeof role === 'string')
+  );
+};
+
+export const isFrontendAuthUser = (value: unknown): value is FrontendAuthUser => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === 'string' &&
+    typeof value.username === 'string' &&
+    Array.isArray(value.roles) &&
+    value.roles.every((role) => typeof role === 'string') &&
+    typeof value.createdAt === 'string' &&
+    typeof value.updatedAt === 'string'
   );
 };

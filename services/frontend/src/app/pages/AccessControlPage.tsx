@@ -1,22 +1,30 @@
 import React from 'react';
-import { fetchAuthValidation, loginToAuthService } from '../../shared/api-client';
+import { fetchAuthValidation, loginToAuthService, registerAuthUser } from '../../shared/api-client';
 import { clearStoredAccessToken, setStoredAccessToken } from '../../config/session';
 import {
   actionLabels,
   getRoleCapability,
   initialAccessRequests,
   initialAuditEntries,
+  mapExternalRoleToUserRole,
   roleActionPolicies,
   roleAssignments,
   roleCapabilities,
   type AccessRequest,
   type AuditEntry,
+  type UserAssignment,
   type UserRole,
 } from '../access-control';
 
 const requestableRoles = roleCapabilities
   .map((capability) => capability.role)
   .filter((role) => role !== 'ADMIN');
+const authProvisionRoles = [
+  'PORT_OPERATOR',
+  'TRANSPORT_COORDINATOR',
+  'SYSTEM_ADMINISTRATOR',
+  'RETAILER',
+] as const;
 
 const buildAuditEntry = (
   request: AccessRequest,
@@ -49,7 +57,14 @@ export function AccessControlPage({
     username: 'admin',
     password: 'admin123',
   });
+  const [identityForm, setIdentityForm] = React.useState({
+    username: '',
+    password: '',
+    role: 'PORT_OPERATOR' as (typeof authProvisionRoles)[number],
+    team: 'Digital Operations',
+  });
   const [authBusy, setAuthBusy] = React.useState(false);
+  const [assignments, setAssignments] = React.useState<UserAssignment[]>(roleAssignments);
   const [requests, setRequests] = React.useState<AccessRequest[]>(initialAccessRequests);
   const [auditEntries, setAuditEntries] = React.useState<AuditEntry[]>(initialAuditEntries);
   const [formState, setFormState] = React.useState({
@@ -169,6 +184,60 @@ export function AccessControlPage({
     }
   };
 
+  const provisionIdentity = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault();
+    setAuthBusy(true);
+
+    try {
+      const user = await registerAuthUser(identityForm.username, identityForm.password, [
+        identityForm.role,
+      ]);
+      const mappedRole = mapExternalRoleToUserRole(user.roles[0] ?? identityForm.role);
+      const assignment: UserAssignment = {
+        name: user.username,
+        team: identityForm.team,
+        role: mappedRole,
+        status: 'Active',
+      };
+
+      setAssignments((current) => [assignment, ...current]);
+      setAuditEntries((current) => [
+        {
+          id: `AUD-${Math.floor(Math.random() * 9000) + 1000}`,
+          actor: 'Live Auth Service',
+          actorRole: 'ADMIN',
+          timestamp: user.createdAt,
+          tenant: formState.tenant,
+          targetUser: user.username,
+          oldRole: mappedRole,
+          newRole: mappedRole,
+          reason: `Provisioned live identity with auth role ${user.roles.join(', ')}`,
+          outcome: 'Approved',
+        },
+        ...current,
+      ]);
+      setAuthSource('live');
+      setAuthSummary(
+        `Provisioned live identity ${user.username} with roles: ${user.roles.join(', ')}`
+      );
+      setIdentityForm({
+        username: '',
+        password: '',
+        role: 'PORT_OPERATOR',
+        team: 'Digital Operations',
+      });
+    } catch (error) {
+      setAuthSource('mock');
+      setAuthSummary(
+        error instanceof Error
+          ? `Unable to provision live identity. ${error.message}`
+          : 'Unable to provision live identity.'
+      );
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
   return (
     <section>
       <div className="page-hero access-control-hero">
@@ -247,6 +316,53 @@ export function AccessControlPage({
                 Clear stored session
               </button>
             </div>
+          </form>
+
+          <h3>Live Identity Provisioning</h3>
+          <form className="governance-form" onSubmit={(event) => void provisionIdentity(event)}>
+            <input
+              required
+              placeholder="Provisioned username"
+              value={identityForm.username}
+              onChange={(event) =>
+                setIdentityForm((current) => ({ ...current, username: event.target.value }))
+              }
+            />
+            <input
+              required
+              placeholder="Temporary password"
+              type="password"
+              value={identityForm.password}
+              onChange={(event) =>
+                setIdentityForm((current) => ({ ...current, password: event.target.value }))
+              }
+            />
+            <input
+              required
+              placeholder="Team"
+              value={identityForm.team}
+              onChange={(event) =>
+                setIdentityForm((current) => ({ ...current, team: event.target.value }))
+              }
+            />
+            <select
+              value={identityForm.role}
+              onChange={(event) =>
+                setIdentityForm((current) => ({
+                  ...current,
+                  role: event.target.value as (typeof authProvisionRoles)[number],
+                }))
+              }
+            >
+              {authProvisionRoles.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
+            <button className="secondary-button" disabled={authBusy} type="submit">
+              {authBusy ? 'Provisioning…' : 'Provision live identity'}
+            </button>
           </form>
 
           <h3>Submit Role Assignment Request</h3>
@@ -387,7 +503,7 @@ export function AccessControlPage({
               </tr>
             </thead>
             <tbody>
-              {roleAssignments.map((assignment) => (
+              {assignments.map((assignment) => (
                 <tr key={assignment.name}>
                   <td>{assignment.name}</td>
                   <td>{assignment.team}</td>

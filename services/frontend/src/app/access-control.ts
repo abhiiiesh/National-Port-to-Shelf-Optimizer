@@ -251,3 +251,19 @@ export const getRoleCapability = (role: UserRole): RoleCapability =>
   roleCapabilities.find((capability) => capability.role === role) ?? roleCapabilities[0];
 
 export const normalizeUserRole = (role: UserRole): UserRole => legacyRoleMap[role] ?? role;
+
+export const mapExternalRoleToUserRole = (role: string): UserRole => {
+  if (role === 'SYSTEM_ADMINISTRATOR') {
+    return 'ADMIN';
+  }
+
+  if (role === 'TRANSPORT_COORDINATOR') {
+    return 'OPERATIONS_MANAGER';
+  }
+
+  if (role === 'PORT_OPERATOR' || role === 'RETAILER' || role === 'LOGISTICS_PARTNER') {
+    return normalizeUserRole(role as UserRole);
+  }
+
+  return 'OPERATIONS_MANAGER';
+};
