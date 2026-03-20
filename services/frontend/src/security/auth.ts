@@ -1,7 +1,17 @@
+export type AuthUserRole =
+  | 'OPERATIONS_MANAGER'
+  | 'PORT_ADMIN'
+  | 'AUCTION_OPERATOR'
+  | 'EXECUTIVE_STAKEHOLDER'
+  | 'ADMIN'
+  | 'PORT_OPERATOR'
+  | 'RETAILER'
+  | 'LOGISTICS_PARTNER';
+
 export interface AuthClaims {
   userId: string;
   tenantId: string;
-  roles: Array<'PORT_OPERATOR' | 'RETAILER' | 'LOGISTICS_PARTNER' | 'ADMIN'>;
+  roles: AuthUserRole[];
   scopes: string[];
   exp: number;
 }
@@ -13,15 +23,28 @@ export interface SessionTokenState {
 }
 
 const scopeMap: Record<string, string[]> = {
+  '/dashboard': ['dashboard:read'],
   '/tracking': ['tracking:read'],
   '/slots': ['slots:read'],
   '/auctions': ['auctions:read'],
-  '/analytics': ['metrics:read'],
-  '/admin': ['admin:read'],
+  '/reports': ['reports:read'],
+  '/news': ['news:read'],
+  '/access-control': ['admin:roles'],
+};
+
+const legacyScopePathMap: Record<string, string> = {
+  '/admin': '/access-control',
+  '/analytics': '/reports',
 };
 
 export const canAccessPath = (claims: AuthClaims, path: string): boolean => {
-  const requiredScopes = scopeMap[path] ?? [];
+  const resolvedPath = legacyScopePathMap[path] ?? path;
+  const requiredScopes = scopeMap[resolvedPath];
+
+  if (!requiredScopes) {
+    return false;
+  }
+
   return requiredScopes.every((scope) => claims.scopes.includes(scope));
 };
 
