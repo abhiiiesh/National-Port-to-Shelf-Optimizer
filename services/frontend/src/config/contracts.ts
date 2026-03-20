@@ -19,6 +19,35 @@ export interface FrontendPerformanceSnapshot {
   avgTransitHours: number;
 }
 
+export interface FrontendAuctionSlot {
+  id: string;
+  origin: string;
+  destination: string;
+  departureTime: string;
+  minimumBid: number;
+  capacity: number;
+}
+
+export interface FrontendAuctionBid {
+  id: string;
+  retailerId: string;
+  containerId: string;
+  bidAmount: number;
+  timestamp: string;
+  status: 'SUBMITTED' | 'ACCEPTED' | 'REJECTED' | 'OUTBID';
+}
+
+export interface FrontendAuctionFeed {
+  id: string;
+  vesselId: string;
+  portId: string;
+  startTime: string;
+  endTime: string;
+  status: 'PENDING' | 'ACTIVE' | 'CLOSED' | 'CANCELLED';
+  slots: FrontendAuctionSlot[];
+  bids: FrontendAuctionBid[];
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
@@ -55,5 +84,60 @@ export const isFrontendPerformanceSnapshot = (
     typeof value.totalShipments === 'number' &&
     typeof value.delayedShipments === 'number' &&
     typeof value.avgTransitHours === 'number'
+  );
+};
+
+const isFrontendAuctionSlot = (value: unknown): value is FrontendAuctionSlot => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === 'string' &&
+    typeof value.origin === 'string' &&
+    typeof value.destination === 'string' &&
+    typeof value.departureTime === 'string' &&
+    typeof value.minimumBid === 'number' &&
+    typeof value.capacity === 'number'
+  );
+};
+
+const isFrontendAuctionBid = (value: unknown): value is FrontendAuctionBid => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === 'string' &&
+    typeof value.retailerId === 'string' &&
+    typeof value.containerId === 'string' &&
+    typeof value.bidAmount === 'number' &&
+    typeof value.timestamp === 'string' &&
+    (value.status === 'SUBMITTED' ||
+      value.status === 'ACCEPTED' ||
+      value.status === 'REJECTED' ||
+      value.status === 'OUTBID')
+  );
+};
+
+export const isFrontendAuctionFeed = (value: unknown): value is FrontendAuctionFeed => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === 'string' &&
+    typeof value.vesselId === 'string' &&
+    typeof value.portId === 'string' &&
+    typeof value.startTime === 'string' &&
+    typeof value.endTime === 'string' &&
+    (value.status === 'PENDING' ||
+      value.status === 'ACTIVE' ||
+      value.status === 'CLOSED' ||
+      value.status === 'CANCELLED') &&
+    Array.isArray(value.slots) &&
+    value.slots.every(isFrontendAuctionSlot) &&
+    Array.isArray(value.bids) &&
+    value.bids.every(isFrontendAuctionBid)
   );
 };
