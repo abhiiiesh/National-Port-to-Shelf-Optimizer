@@ -70,13 +70,15 @@ export function AuctionsPage(): JSX.Element {
           <h2 className="page-heading">Dynamic Slot Auctions</h2>
           <p className="page-subheading">
             Manage auction lifecycles with simplified status tabs, corridor and region filters, live
-            bid inspection, and operator actions from a single board.
+            bid inspection, and operator actions from a single responsive board.
           </p>
         </div>
         <div className="hero-status-card">
           <div className="kpi-label">Auction milestone</div>
           <div className="hero-status-value">Operator workflow board is now live</div>
-          <div className="kpi-trend up">Ready for API adapter replacement after UX sign-off</div>
+          <div className="kpi-trend up">
+            Auctions milestone achieved · next step is API adapter replacement
+          </div>
         </div>
       </div>
 
@@ -247,7 +249,9 @@ export function AuctionsPage(): JSX.Element {
         <div className="card-header-row">
           <div>
             <h3>Recent Auction Actions</h3>
-            <div className="kpi-label">Dynamic operator activity log for the current session</div>
+            <div className="kpi-label">
+              Dynamic operator activity log for the current session across responsive layouts
+            </div>
           </div>
           <span className="tag good">{activityLog.length} events</span>
         </div>

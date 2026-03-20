@@ -2,6 +2,8 @@
 
 This document tracks the current product milestone for each application service/workstream and the recommended next delivery step.
 
+> Note: all upcoming frontend milestones should preserve and improve responsive behavior so the application remains usable across desktop, tablet, and mobile breakpoints.
+
 ## Milestone status key
 
 - **Completed milestone**: user-facing UX or service baseline is in place and usable.
@@ -65,9 +67,10 @@ This document tracks the current product milestone for each application service/
   - operator actions,
   - session activity log.
 - **Next milestone**:
-  - wire auction lifecycle actions to backend APIs,
-  - lane drilldown with policy-aware controls,
-  - settlement and award confirmation states.
+  - move to API adapter integration for auction lifecycle actions,
+  - add lane drilldown with policy-aware controls,
+  - add settlement and award confirmation states,
+  - preserve responsive usability while deepening the workflow.
 
 ### 5. Slot Management
 
@@ -148,7 +151,7 @@ This document tracks the current product milestone for each application service/
 
 ## Recommended delivery sequence from here
 
-1. Add **real API adapters** page-by-page, starting with Tracking, Access Control, and Auctions.
+1. Add **real API adapters** page-by-page, starting with Tracking, Access Control, and Auctions, while maintaining responsive layouts.
 2. Extend **slot management** into operational planning workflows.
 3. Deepen **reports** into decision-ready operational workflows.
 4. Evolve communications and dashboard widgets into live operational channels.
