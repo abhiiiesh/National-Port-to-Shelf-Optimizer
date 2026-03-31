@@ -1,6 +1,7 @@
 # Service Milestones
 
 This document tracks the current product milestone for each application service/workstream and the recommended next delivery step.
+For cross-stream review format (Workstream, Current Status, What Has Been Reached, Gaps / Limitations, Future Development Points), use `docs/implementation/workstream-tracker.md`.
 
 > Note: all upcoming frontend milestones should preserve and improve responsive behavior so the application remains usable across desktop, tablet, and mobile breakpoints.
 

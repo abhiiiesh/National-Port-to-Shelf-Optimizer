@@ -1,5 +1,11 @@
 import React from 'react';
-import { fetchAuthValidation, loginToAuthService, registerAuthUser } from '../../shared/api-client';
+import {
+  createAccessRequest,
+  fetchAuthValidation,
+  loginToAuthService,
+  registerAuthUser,
+  reviewAccessRequest,
+} from '../../shared/api-client';
 import { clearStoredAccessToken, setStoredAccessToken } from '../../config/session';
 import {
   actionLabels,
@@ -44,6 +50,38 @@ const buildAuditEntry = (
   outcome,
 });
 
+const toUserRole = (role: string): UserRole => {
+  const allRoles: UserRole[] = [
+    'OPERATIONS_MANAGER',
+    'PORT_ADMIN',
+    'AUCTION_OPERATOR',
+    'EXECUTIVE_STAKEHOLDER',
+    'ADMIN',
+    'PORT_OPERATOR',
+    'RETAILER',
+    'LOGISTICS_PARTNER',
+  ];
+  return allRoles.includes(role as UserRole) ? (role as UserRole) : 'OPERATIONS_MANAGER';
+};
+
+const mapPersistedRequest = (request: {
+  requestId: string;
+  requesterName: string;
+  team: string;
+  currentRole: string;
+  requestedRole: string;
+  requestedBy: string;
+  status: 'Pending Approval' | 'Approved' | 'Rejected';
+  reason: string;
+  tenant: string;
+  submittedAt: string;
+}): AccessRequest => ({
+  ...request,
+  currentRole: toUserRole(request.currentRole),
+  requestedRole: toUserRole(request.requestedRole),
+  requestedBy: toUserRole(request.requestedBy),
+});
+
 export function AccessControlPage({
   activeRole = 'ADMIN',
 }: {
@@ -64,6 +102,7 @@ export function AccessControlPage({
     team: 'Digital Operations',
   });
   const [authBusy, setAuthBusy] = React.useState(false);
+  const [requestBusy, setRequestBusy] = React.useState(false);
   const [assignments, setAssignments] = React.useState<UserAssignment[]>(roleAssignments);
   const [requests, setRequests] = React.useState<AccessRequest[]>(initialAccessRequests);
   const [auditEntries, setAuditEntries] = React.useState<AuditEntry[]>(initialAuditEntries);
@@ -103,8 +142,9 @@ export function AccessControlPage({
     void hydrateAuthValidation();
   }, [hydrateAuthValidation]);
 
-  const submitRequest = (event: React.FormEvent<HTMLFormElement>): void => {
+  const submitRequest = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
+    setRequestBusy(true);
 
     const request: AccessRequest = {
       requestId: `REQ-${Math.floor(Math.random() * 900) + 300}`,
@@ -119,22 +159,42 @@ export function AccessControlPage({
       submittedAt: '2026-03-19 11:55 UTC',
     };
 
-    setRequests((current) => [request, ...current]);
-    setAuditEntries((current) => [
-      buildAuditEntry(request, activeRole, formState.requesterName || 'Unknown', 'Requested'),
-      ...current,
-    ]);
-    setFormState({
-      requesterName: '',
-      team: '',
-      currentRole: 'OPERATIONS_MANAGER',
-      requestedRole: 'PORT_ADMIN',
-      tenant: 'port-to-shelf-india',
-      reason: '',
-    });
+    try {
+      const persistedRequest = mapPersistedRequest(await createAccessRequest(request));
+      setRequests((current) => [persistedRequest, ...current]);
+      setAuthSource('live');
+      setAuthSummary(
+        `Persisted access request ${persistedRequest.requestId} through live governance adapter.`
+      );
+    } catch (error) {
+      setRequests((current) => [request, ...current]);
+      setAuthSource('mock');
+      setAuthSummary(
+        error instanceof Error
+          ? `Live request persistence unavailable; stored locally. ${error.message}`
+          : 'Live request persistence unavailable; stored locally.'
+      );
+    } finally {
+      setAuditEntries((current) => [
+        buildAuditEntry(request, activeRole, formState.requesterName || 'Unknown', 'Requested'),
+        ...current,
+      ]);
+      setFormState({
+        requesterName: '',
+        team: '',
+        currentRole: 'OPERATIONS_MANAGER',
+        requestedRole: 'PORT_ADMIN',
+        tenant: 'port-to-shelf-india',
+        reason: '',
+      });
+      setRequestBusy(false);
+    }
   };
 
-  const reviewRequest = (requestId: string, outcome: 'Approved' | 'Rejected'): void => {
+  const reviewRequest = async (
+    requestId: string,
+    outcome: 'Approved' | 'Rejected'
+  ): Promise<void> => {
     if (!isAdminApprover) {
       return;
     }
@@ -145,10 +205,27 @@ export function AccessControlPage({
       return;
     }
 
-    const reviewedRequest: AccessRequest = {
+    setRequestBusy(true);
+
+    let reviewedRequest: AccessRequest = {
       ...existingRequest,
       status: outcome === 'Approved' ? 'Approved' : 'Rejected',
     };
+
+    try {
+      reviewedRequest = mapPersistedRequest(await reviewAccessRequest(requestId, outcome));
+      setAuthSource('live');
+      setAuthSummary(
+        `Persisted ${outcome.toLowerCase()} decision for ${reviewedRequest.requestId} via live governance adapter.`
+      );
+    } catch (error) {
+      setAuthSource('mock');
+      setAuthSummary(
+        error instanceof Error
+          ? `Live review persistence unavailable; applied locally. ${error.message}`
+          : 'Live review persistence unavailable; applied locally.'
+      );
+    }
 
     setRequests((current) =>
       current.map((request) => (request.requestId === requestId ? reviewedRequest : request))
@@ -157,6 +234,7 @@ export function AccessControlPage({
       buildAuditEntry(reviewedRequest, activeRole, 'Platform Admin', outcome),
       ...current,
     ]);
+    setRequestBusy(false);
   };
 
   const loginSession = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
@@ -366,7 +444,7 @@ export function AccessControlPage({
           </form>
 
           <h3>Submit Role Assignment Request</h3>
-          <form className="governance-form" onSubmit={submitRequest}>
+          <form className="governance-form" onSubmit={(event) => void submitRequest(event)}>
             <input
               required
               placeholder="Requester name"
@@ -430,8 +508,8 @@ export function AccessControlPage({
               }
               rows={4}
             />
-            <button className="primary-button" type="submit">
-              Submit request
+            <button className="primary-button" disabled={requestBusy} type="submit">
+              {requestBusy ? 'Submitting…' : 'Submit request'}
             </button>
           </form>
         </article>
@@ -464,17 +542,17 @@ export function AccessControlPage({
                 <div className="approval-actions">
                   <button
                     className="primary-button"
-                    disabled={!isAdminApprover}
+                    disabled={!isAdminApprover || requestBusy}
                     type="button"
-                    onClick={() => reviewRequest(request.requestId, 'Approved')}
+                    onClick={() => void reviewRequest(request.requestId, 'Approved')}
                   >
                     Approve
                   </button>
                   <button
                     className="secondary-button"
-                    disabled={!isAdminApprover}
+                    disabled={!isAdminApprover || requestBusy}
                     type="button"
-                    onClick={() => reviewRequest(request.requestId, 'Rejected')}
+                    onClick={() => void reviewRequest(request.requestId, 'Rejected')}
                   >
                     Reject
                   </button>

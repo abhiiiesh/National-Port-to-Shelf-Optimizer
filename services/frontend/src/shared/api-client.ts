@@ -1,10 +1,12 @@
 import {
   type FrontendAuctionFeed,
+  type FrontendAccessRequest,
   type FrontendAuthToken,
   type FrontendAuthUser,
   type FrontendAuthValidation,
   isApiErrorEnvelope,
   isFrontendAuctionFeed,
+  isFrontendAccessRequest,
   isFrontendAuthToken,
   isFrontendAuthUser,
   isFrontendAuthValidation,
@@ -128,6 +130,41 @@ export const registerAuthUser = async (
   );
   if (!isFrontendAuthUser(payload)) {
     throw new Error('Contract validation failed for auth register payload');
+  }
+
+  return payload;
+};
+
+export const createAccessRequest = async (
+  request: FrontendAccessRequest
+): Promise<FrontendAccessRequest> => {
+  const payload = await fetchJson('/api/v1/access-control/requests', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+  if (!isFrontendAccessRequest(payload)) {
+    throw new Error('Contract validation failed for access request create payload');
+  }
+
+  return payload;
+};
+
+export const reviewAccessRequest = async (
+  requestId: string,
+  outcome: 'Approved' | 'Rejected'
+): Promise<FrontendAccessRequest> => {
+  const payload = await fetchJson(`/api/v1/access-control/requests/${requestId}/review`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ outcome }),
+  });
+  if (!isFrontendAccessRequest(payload)) {
+    throw new Error('Contract validation failed for access request review payload');
   }
 
   return payload;

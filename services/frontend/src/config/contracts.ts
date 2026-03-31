@@ -70,6 +70,19 @@ export interface FrontendAuthUser {
   updatedAt: string;
 }
 
+export interface FrontendAccessRequest {
+  requestId: string;
+  requesterName: string;
+  team: string;
+  currentRole: string;
+  requestedRole: string;
+  requestedBy: string;
+  status: 'Pending Approval' | 'Approved' | 'Rejected';
+  reason: string;
+  tenant: string;
+  submittedAt: string;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
@@ -203,5 +216,26 @@ export const isFrontendAuthUser = (value: unknown): value is FrontendAuthUser =>
     value.roles.every((role) => typeof role === 'string') &&
     typeof value.createdAt === 'string' &&
     typeof value.updatedAt === 'string'
+  );
+};
+
+export const isFrontendAccessRequest = (value: unknown): value is FrontendAccessRequest => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.requestId === 'string' &&
+    typeof value.requesterName === 'string' &&
+    typeof value.team === 'string' &&
+    typeof value.currentRole === 'string' &&
+    typeof value.requestedRole === 'string' &&
+    typeof value.requestedBy === 'string' &&
+    (value.status === 'Pending Approval' ||
+      value.status === 'Approved' ||
+      value.status === 'Rejected') &&
+    typeof value.reason === 'string' &&
+    typeof value.tenant === 'string' &&
+    typeof value.submittedAt === 'string'
   );
 };
