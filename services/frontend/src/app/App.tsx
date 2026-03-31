@@ -75,6 +75,43 @@ const resolveAssignedRoles = (roles: string[] | undefined): UserRole[] => {
   return Array.from(new Set(fallbackRoles));
 };
 
+function AccessBoundary({ role }: { role: UserRole }): JSX.Element {
+  const location = useLocation();
+  const resolution = resolveRouteForUser(location.pathname, role);
+
+  if (resolution.reason === 'unauthorized' && resolution.redirectTo) {
+    return <Navigate to={resolution.redirectTo} replace />;
+  }
+
+  return <></>;
+}
+
+function RoleSelector({
+  role,
+  setRole,
+}: {
+  role: UserRole;
+  setRole: (role: UserRole) => void;
+}): JSX.Element {
+  const capability = getRoleCapability(role);
+
+  return (
+    <div className="cluster role-panel">
+      <div>
+        <div className="tag">Active role</div>
+        <div className="role-label">{capability.label}</div>
+      </div>
+      <select value={role} onChange={(event) => setRole(event.target.value as UserRole)}>
+        {roleOptions.map((option) => (
+          <option value={option} key={option}>
+            {getRoleCapability(option).label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export function App(): JSX.Element {
   const location = useLocation();
   const [assignedRoles, setAssignedRoles] = React.useState<UserRole[]>(['OPERATIONS_MANAGER']);
