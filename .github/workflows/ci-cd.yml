@@ -1,7 +1,7 @@
 name: CI/CD Pipeline
 
-permissions: 
-  contents: read 
+permissions:
+  contents: read
   packages: write
 
 on:
