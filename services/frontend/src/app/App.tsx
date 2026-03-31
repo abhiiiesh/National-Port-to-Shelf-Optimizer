@@ -215,7 +215,7 @@ export function App(): JSX.Element {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/tracking" element={<TrackingPage activeRole={role} />} />
             <Route path="/auctions" element={<AuctionsPage activeRole={role} />} />
-            <Route path="/slots" element={<SlotsPage />} />
+            <Route path="/slots" element={<SlotsPage activeRole={role} />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/access-control" element={<AccessControlPage activeRole={role} />} />

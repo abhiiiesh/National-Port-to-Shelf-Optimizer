@@ -2,9 +2,11 @@ import {
   createAccessRequest,
   fetchAuthValidation,
   fetchPerformance,
+  fetchSlotRecommendations,
   fetchVessels,
   loginToAuthService,
   submitAuctionAction,
+  submitSlotOverride,
   submitTrackingAction,
   reviewAccessRequest,
   registerAuthUser,
@@ -271,6 +273,56 @@ describe('frontend integration tests: typed API client', () => {
     expect(result.status).toBe('completed');
     expect(global.fetch).toHaveBeenCalledWith(
       'http://gateway.local/api/v1/auctions/AUC-101/actions',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'content-type': 'application/json',
+          authorization: 'Bearer token-ops',
+        }),
+      })
+    );
+  });
+
+  it('fetches slot recommendations through slot adapter endpoint', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [
+        {
+          id: 'SLOT-1',
+          mode: 'Rail',
+          corridor: 'DFCC East',
+          available: 24,
+          utilization: 82,
+          recommendedAllocation: 14,
+          priorityReason: 'Constrained capacity in peak window.',
+          status: 'WATCH',
+        },
+      ],
+    } as Response);
+
+    const recommendations = await fetchSlotRecommendations();
+    expect(recommendations[0].id).toBe('SLOT-1');
+    expect(global.fetch).toHaveBeenCalledWith('http://gateway.local/api/v1/slots/recommendations', {
+      headers: undefined,
+    });
+  });
+
+  it('submits slot overrides through slot adapter endpoint', async () => {
+    (window.localStorage as Storage).setItem('port-to-shelf-access-token', 'token-ops');
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        operationId: 'op-slot-1',
+        status: 'accepted',
+        message: 'Slot override accepted.',
+        updatedAt: '2026-03-31T09:30:00.000Z',
+      }),
+    } as Response);
+
+    const result = await submitSlotOverride('SLOT-1', 15, 'Urgent lane balancing');
+    expect(result.operationId).toBe('op-slot-1');
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://gateway.local/api/v1/slots/recommendations/SLOT-1/override',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({

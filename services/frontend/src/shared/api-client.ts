@@ -13,8 +13,10 @@ import {
   isFrontendAuthUser,
   isFrontendAuthValidation,
   type FrontendPerformanceSnapshot,
+  type FrontendSlotRecommendation,
   type FrontendVesselSummary,
   isFrontendPerformanceSnapshot,
+  isFrontendSlotRecommendation,
   isFrontendVesselSummary,
 } from '../config/contracts';
 import { getFrontendEnvironment } from '../config/environment';
@@ -203,6 +205,34 @@ export const submitAuctionAction = async (
   });
   if (!isFrontendActionMutationResult(payload)) {
     throw new Error('Contract validation failed for auction action payload');
+  }
+
+  return payload;
+};
+
+export const fetchSlotRecommendations = async (): Promise<FrontendSlotRecommendation[]> => {
+  const payload = await fetchJson('/api/v1/slots/recommendations');
+  if (!Array.isArray(payload) || !payload.every(isFrontendSlotRecommendation)) {
+    throw new Error('Contract validation failed for slot recommendation payload');
+  }
+
+  return payload;
+};
+
+export const submitSlotOverride = async (
+  recommendationId: string,
+  allocation: number,
+  reason: string
+): Promise<FrontendActionMutationResult> => {
+  const payload = await fetchJson(`/api/v1/slots/recommendations/${recommendationId}/override`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ allocation, reason }),
+  });
+  if (!isFrontendActionMutationResult(payload)) {
+    throw new Error('Contract validation failed for slot override payload');
   }
 
   return payload;

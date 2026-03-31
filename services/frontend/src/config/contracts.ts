@@ -90,6 +90,17 @@ export interface FrontendActionMutationResult {
   updatedAt: string;
 }
 
+export interface FrontendSlotRecommendation {
+  id: string;
+  mode: 'Rail' | 'Road' | 'Inland';
+  corridor: string;
+  available: number;
+  utilization: number;
+  recommendedAllocation: number;
+  priorityReason: string;
+  status: 'HEALTHY' | 'WATCH' | 'CONSTRAINED';
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
@@ -259,5 +270,24 @@ export const isFrontendActionMutationResult = (
     (value.status === 'accepted' || value.status === 'completed') &&
     typeof value.message === 'string' &&
     typeof value.updatedAt === 'string'
+  );
+};
+
+export const isFrontendSlotRecommendation = (
+  value: unknown
+): value is FrontendSlotRecommendation => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === 'string' &&
+    (value.mode === 'Rail' || value.mode === 'Road' || value.mode === 'Inland') &&
+    typeof value.corridor === 'string' &&
+    typeof value.available === 'number' &&
+    typeof value.utilization === 'number' &&
+    typeof value.recommendedAllocation === 'number' &&
+    typeof value.priorityReason === 'string' &&
+    (value.status === 'HEALTHY' || value.status === 'WATCH' || value.status === 'CONSTRAINED')
   );
 };
