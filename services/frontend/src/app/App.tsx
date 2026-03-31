@@ -213,8 +213,8 @@ export function App(): JSX.Element {
           <Routes>
             <Route path="/" element={<Navigate to={currentCapability.defaultRoute} replace />} />
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/tracking" element={<TrackingPage />} />
-            <Route path="/auctions" element={<AuctionsPage />} />
+            <Route path="/tracking" element={<TrackingPage activeRole={role} />} />
+            <Route path="/auctions" element={<AuctionsPage activeRole={role} />} />
             <Route path="/slots" element={<SlotsPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/news" element={<NewsPage />} />

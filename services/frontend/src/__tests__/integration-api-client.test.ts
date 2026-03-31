@@ -4,6 +4,8 @@ import {
   fetchPerformance,
   fetchVessels,
   loginToAuthService,
+  submitAuctionAction,
+  submitTrackingAction,
   reviewAccessRequest,
   registerAuthUser,
 } from '../shared/api-client';
@@ -217,6 +219,58 @@ describe('frontend integration tests: typed API client', () => {
     expect(request.status).toBe('Approved');
     expect(global.fetch).toHaveBeenCalledWith(
       'http://gateway.local/api/v1/access-control/requests/REQ-450/review',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'content-type': 'application/json',
+          authorization: 'Bearer token-ops',
+        }),
+      })
+    );
+  });
+
+  it('submits tracking actions through tracking adapter endpoints', async () => {
+    (window.localStorage as Storage).setItem('port-to-shelf-access-token', 'token-ops');
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        operationId: 'op-trk-1',
+        status: 'accepted',
+        message: 'Tracking action accepted.',
+        updatedAt: '2026-03-31T09:10:00.000Z',
+      }),
+    } as Response);
+
+    const result = await submitTrackingAction('TRK-401', 'escalate');
+    expect(result.operationId).toBe('op-trk-1');
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://gateway.local/api/v1/tracking/TRK-401/actions',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'content-type': 'application/json',
+          authorization: 'Bearer token-ops',
+        }),
+      })
+    );
+  });
+
+  it('submits auction actions through auction adapter endpoints', async () => {
+    (window.localStorage as Storage).setItem('port-to-shelf-access-token', 'token-ops');
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        operationId: 'op-auc-1',
+        status: 'completed',
+        message: 'Auction action completed.',
+        updatedAt: '2026-03-31T09:20:00.000Z',
+      }),
+    } as Response);
+
+    const result = await submitAuctionAction('AUC-101', 'award-auction');
+    expect(result.status).toBe('completed');
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://gateway.local/api/v1/auctions/AUC-101/actions',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({

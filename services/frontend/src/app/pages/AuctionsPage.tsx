@@ -1,7 +1,8 @@
 import React from 'react';
 import { auctionRecords, type AuctionRecord } from '../mock-data';
-import { fetchAuctions } from '../../shared/api-client';
+import { fetchAuctions, submitAuctionAction } from '../../shared/api-client';
 import { mergeAuctionRecords } from '../../features/auctions/records';
+import { getRoleCapability, roleActionPolicies, type UserRole } from '../access-control';
 
 type AuctionTab = 'All' | 'Active' | 'Closing' | 'Closed';
 
@@ -9,6 +10,13 @@ const auctionTabs: AuctionTab[] = ['All', 'Active', 'Closing', 'Closed'];
 const regions = ['All regions', 'North', 'South', 'East', 'West'] as const;
 const corridors = ['All corridors', 'DFCC East', 'NH44', 'NW-1', 'East Coast Express'] as const;
 const operatorActions = ['Create Auction', 'Pause', 'Close', 'Award', 'Reject Bid'] as const;
+const auctionActionMap = {
+  'Create Auction': 'create-auction',
+  Pause: 'pause-auction',
+  Close: 'close-auction',
+  Award: 'award-auction',
+  'Reject Bid': 'reject-bid',
+} as const;
 
 const badgeToneForAuction = (status: AuctionRecord['status']): string => {
   if (status === 'Active') {
@@ -22,7 +30,11 @@ const badgeToneForAuction = (status: AuctionRecord['status']): string => {
   return 'neutral';
 };
 
-export function AuctionsPage(): JSX.Element {
+export function AuctionsPage({
+  activeRole = 'AUCTION_OPERATOR',
+}: {
+  activeRole?: UserRole;
+}): JSX.Element {
   const [records, setRecords] = React.useState<AuctionRecord[]>(auctionRecords);
   const [dataSource, setDataSource] = React.useState<'mock' | 'live'>('mock');
   const [isLoading, setIsLoading] = React.useState(false);
@@ -35,6 +47,9 @@ export function AuctionsPage(): JSX.Element {
   const [activityLog, setActivityLog] = React.useState<string[]>([
     'Auction Desk initialized operator workspace.',
   ]);
+  const [actionBusy, setActionBusy] = React.useState(false);
+  const policy = roleActionPolicies.find((entry) => entry.role === activeRole);
+  const allowedAuctionActions = policy?.auctionActions ?? [];
 
   const hydrateLiveAuctions = React.useCallback(async () => {
     setIsLoading(true);
@@ -87,15 +102,34 @@ export function AuctionsPage(): JSX.Element {
     }
   }, [selectedAuction, selectedAuctionId]);
 
-  const runAction = (action: (typeof operatorActions)[number]): void => {
+  const runAction = async (action: (typeof operatorActions)[number]): Promise<void> => {
     if (!selectedAuction) {
       return;
     }
 
-    setActivityLog((current) => [
-      `${action} triggered for ${selectedAuction.id} · ${selectedAuction.lane}`,
-      ...current,
-    ]);
+    setActionBusy(true);
+    try {
+      const result = await submitAuctionAction(selectedAuction.id, auctionActionMap[action]);
+      setDataSource('live');
+      setLoadMessage(`Live auction action accepted · ${result.message}`);
+      setActivityLog((current) => [
+        `${action} accepted for ${selectedAuction.id} · ${result.status} · ${result.operationId}`,
+        ...current,
+      ]);
+    } catch (error) {
+      setDataSource('mock');
+      setLoadMessage(
+        error instanceof Error
+          ? `Live auction action unavailable; logged locally. ${error.message}`
+          : 'Live auction action unavailable; logged locally.'
+      );
+      setActivityLog((current) => [
+        `${action} logged locally for ${selectedAuction.id} · mock fallback`,
+        ...current,
+      ]);
+    } finally {
+      setActionBusy(false);
+    }
   };
 
   return (
@@ -253,16 +287,27 @@ export function AuctionsPage(): JSX.Element {
               <div className="drawer-section">
                 <div className="section-label">Operator actions</div>
                 <div className="action-button-grid">
-                  {operatorActions.map((action) => (
-                    <button
-                      className="secondary-button"
-                      key={action}
-                      type="button"
-                      onClick={() => runAction(action)}
-                    >
-                      {action}
-                    </button>
-                  ))}
+                  {operatorActions.map((action) => {
+                    const mappedAction = auctionActionMap[action];
+                    const canRunAction = allowedAuctionActions.includes(mappedAction);
+
+                    return (
+                      <button
+                        className="secondary-button"
+                        key={action}
+                        type="button"
+                        disabled={actionBusy || !canRunAction}
+                        title={
+                          canRunAction
+                            ? `Run ${action}`
+                            : `${getRoleCapability(activeRole).label} cannot run ${action} actions`
+                        }
+                        onClick={() => void runAction(action)}
+                      >
+                        {actionBusy ? 'Submitting…' : action}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

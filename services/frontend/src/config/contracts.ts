@@ -83,6 +83,13 @@ export interface FrontendAccessRequest {
   submittedAt: string;
 }
 
+export interface FrontendActionMutationResult {
+  operationId: string;
+  status: 'accepted' | 'completed';
+  message: string;
+  updatedAt: string;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
@@ -237,5 +244,20 @@ export const isFrontendAccessRequest = (value: unknown): value is FrontendAccess
     typeof value.reason === 'string' &&
     typeof value.tenant === 'string' &&
     typeof value.submittedAt === 'string'
+  );
+};
+
+export const isFrontendActionMutationResult = (
+  value: unknown
+): value is FrontendActionMutationResult => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.operationId === 'string' &&
+    (value.status === 'accepted' || value.status === 'completed') &&
+    typeof value.message === 'string' &&
+    typeof value.updatedAt === 'string'
   );
 };

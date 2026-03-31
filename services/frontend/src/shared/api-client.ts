@@ -1,12 +1,14 @@
 import {
   type FrontendAuctionFeed,
   type FrontendAccessRequest,
+  type FrontendActionMutationResult,
   type FrontendAuthToken,
   type FrontendAuthUser,
   type FrontendAuthValidation,
   isApiErrorEnvelope,
   isFrontendAuctionFeed,
   isFrontendAccessRequest,
+  isFrontendActionMutationResult,
   isFrontendAuthToken,
   isFrontendAuthUser,
   isFrontendAuthValidation,
@@ -165,6 +167,42 @@ export const reviewAccessRequest = async (
   });
   if (!isFrontendAccessRequest(payload)) {
     throw new Error('Contract validation failed for access request review payload');
+  }
+
+  return payload;
+};
+
+export const submitTrackingAction = async (
+  trackingId: string,
+  action: 'reroute' | 'escalate' | 'hold' | 'release'
+): Promise<FrontendActionMutationResult> => {
+  const payload = await fetchJson(`/api/v1/tracking/${trackingId}/actions`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ action }),
+  });
+  if (!isFrontendActionMutationResult(payload)) {
+    throw new Error('Contract validation failed for tracking action payload');
+  }
+
+  return payload;
+};
+
+export const submitAuctionAction = async (
+  auctionId: string,
+  action: 'create-auction' | 'pause-auction' | 'close-auction' | 'award-auction' | 'reject-bid'
+): Promise<FrontendActionMutationResult> => {
+  const payload = await fetchJson(`/api/v1/auctions/${auctionId}/actions`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ action }),
+  });
+  if (!isFrontendActionMutationResult(payload)) {
+    throw new Error('Contract validation failed for auction action payload');
   }
 
   return payload;

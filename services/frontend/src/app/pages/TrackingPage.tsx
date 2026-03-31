@@ -1,11 +1,18 @@
 import React from 'react';
 import { trackingRecords, type TrackingRecord } from '../mock-data';
-import { fetchVessels } from '../../shared/api-client';
+import { fetchVessels, submitTrackingAction } from '../../shared/api-client';
 import { mergeTrackingRecords } from '../../features/tracking/records';
+import {
+  getRoleCapability,
+  roleActionPolicies,
+  type UserRole,
+  type GovernedAction,
+} from '../access-control';
 
 const statusOptions = ['All statuses', 'On Track', 'Delay Risk', 'Escalated'] as const;
 const modeOptions = ['All modes', 'Rail', 'Road', 'Inland'] as const;
 const priorityOptions = ['All priorities', 'High', 'Medium', 'Low'] as const;
+const trackingActions = ['reroute', 'escalate', 'hold', 'release'] as const;
 
 const matchesOption = (value: string, selected: string, allLabel: string): boolean =>
   selected === allLabel || value === selected;
@@ -22,7 +29,11 @@ const badgeClassForStatus = (status: TrackingRecord['status']): string => {
   return 'critical';
 };
 
-export function TrackingPage(): JSX.Element {
+export function TrackingPage({
+  activeRole = 'OPERATIONS_MANAGER',
+}: {
+  activeRole?: UserRole;
+}): JSX.Element {
   const [records, setRecords] = React.useState<TrackingRecord[]>(trackingRecords);
   const [dataSource, setDataSource] = React.useState<'mock' | 'live'>('mock');
   const [isLoading, setIsLoading] = React.useState(false);
@@ -34,6 +45,9 @@ export function TrackingPage(): JSX.Element {
   const [priorityFilter, setPriorityFilter] =
     React.useState<(typeof priorityOptions)[number]>('All priorities');
   const [selectedRecordId, setSelectedRecordId] = React.useState(trackingRecords[0]?.id ?? '');
+  const [actionBusy, setActionBusy] = React.useState(false);
+  const policy = roleActionPolicies.find((entry) => entry.role === activeRole);
+  const allowedTrackingActions = policy?.trackingActions ?? [];
 
   const hydrateLiveTracking = React.useCallback(async () => {
     setIsLoading(true);
@@ -96,6 +110,49 @@ export function TrackingPage(): JSX.Element {
       setSelectedRecordId(selectedRecord.id);
     }
   }, [selectedRecord, selectedRecordId]);
+
+  const runTrackingAction = async (
+    action: Extract<GovernedAction, 'reroute' | 'escalate' | 'hold' | 'release'>,
+    record: TrackingRecord
+  ): Promise<void> => {
+    setActionBusy(true);
+    try {
+      const result = await submitTrackingAction(record.id, action);
+      setLoadMessage(`Live action accepted · ${result.message}`);
+      setDataSource('live');
+      setRecords((current) =>
+        current.map((item) =>
+          item.id === record.id
+            ? {
+                ...item,
+                assignedAction: `${action.toUpperCase()} requested · ${result.status}`,
+                status: action === 'escalate' ? 'Escalated' : item.status,
+              }
+            : item
+        )
+      );
+    } catch (error) {
+      setLoadMessage(
+        error instanceof Error
+          ? `Live action unavailable; logged locally. ${error.message}`
+          : 'Live action unavailable; logged locally.'
+      );
+      setDataSource('mock');
+      setRecords((current) =>
+        current.map((item) =>
+          item.id === record.id
+            ? {
+                ...item,
+                assignedAction: `${action.toUpperCase()} logged locally (mock fallback).`,
+                status: action === 'escalate' ? 'Escalated' : item.status,
+              }
+            : item
+        )
+      );
+    } finally {
+      setActionBusy(false);
+    }
+  };
 
   return (
     <section>
@@ -291,6 +348,27 @@ export function TrackingPage(): JSX.Element {
               <div className="drawer-section">
                 <div className="section-label">Assigned next action</div>
                 <div className="action-summary">{selectedRecord.assignedAction}</div>
+                <div className="action-button-grid" style={{ marginTop: '8px' }}>
+                  {trackingActions.map((action) => {
+                    const canRunAction = allowedTrackingActions.includes(action);
+                    return (
+                      <button
+                        className="secondary-button"
+                        key={action}
+                        type="button"
+                        disabled={actionBusy || !canRunAction}
+                        title={
+                          canRunAction
+                            ? `Run ${action}`
+                            : `${getRoleCapability(activeRole).label} cannot run ${action} actions`
+                        }
+                        onClick={() => void runTrackingAction(action, selectedRecord)}
+                      >
+                        {actionBusy ? 'Submitting…' : action}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="drawer-section">
