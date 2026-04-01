@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link, Navigate, Route, Routes } from 'react-router-dom';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { BrandLogo } from './components.BrandLogo';
 import { getRoleCapability, mapExternalRoleToUserRole, type UserRole } from './access-control';
@@ -20,6 +21,10 @@ import {
   setStoredSidebarCollapsed,
 } from '../config/session';
 
+const navStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: '12px',
+  marginBottom: '16px',
 const SIDEBAR_BREAKPOINT_PX = 1100;
 const navIcons: Record<string, string> = {
   '/dashboard': '⌂',
@@ -102,43 +107,6 @@ const resolveAssignedRoles = (roles: unknown): UserRole[] => {
 
   return uniqueRoles.length > 0 ? uniqueRoles : ['OPERATIONS_MANAGER'];
 };
-
-function AccessBoundary({ role }: { role: UserRole }): JSX.Element {
-  const location = useLocation();
-  const resolution = resolveRouteForUser(location.pathname, role);
-
-  if (resolution.reason === 'unauthorized' && resolution.redirectTo) {
-    return <Navigate to={resolution.redirectTo} replace />;
-  }
-
-  return <></>;
-}
-
-function RoleSelector({
-  role,
-  setRole,
-}: {
-  role: UserRole;
-  setRole: (role: UserRole) => void;
-}): JSX.Element {
-  const capability = getRoleCapability(role);
-
-  return (
-    <div className="cluster role-panel">
-      <div>
-        <div className="tag">Active role</div>
-        <div className="role-label">{capability.label}</div>
-      </div>
-      <select value={role} onChange={(event) => setRole(event.target.value as UserRole)}>
-        {roleOptions.map((option) => (
-          <option value={option} key={option}>
-            {getRoleCapability(option).label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
 
 export function App(): JSX.Element {
   const location = useLocation();
@@ -307,9 +275,32 @@ export function App(): JSX.Element {
   }
 
   return (
+    <main
+      style={{
+        fontFamily: 'Arial, sans-serif',
+        margin: '0 auto',
+        maxWidth: '960px',
+        padding: '24px',
+      }}
     <div
       className={`app-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'} ${isCompactSidebar ? 'sidebar-compact-mode' : ''}`}
     >
+      <h1>National Port-to-Shelf Optimizer</h1>
+      <p>Operational UI shell for tracking, auctioning, and slot management workflows.</p>
+      <nav style={navStyle}>
+        <Link to="/dashboard">Dashboard</Link>
+        <Link to="/tracking">Tracking</Link>
+        <Link to="/auctions">Auctions</Link>
+        <Link to="/slots">Slots</Link>
+      </nav>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/tracking" element={<TrackingPage />} />
+        <Route path="/auctions" element={<AuctionsPage />} />
+        <Route path="/slots" element={<SlotsPage />} />
+      </Routes>
+    </main>
       {isCompactSidebar && isSidebarOpen ? (
         <button
           aria-label="Close navigation panel"
