@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { BrandLogo } from './components.BrandLogo';
-import { getRoleCapability, mapExternalRoleToUserRole, type UserRole } from './access-control';
+import { getRoleCapability, type UserRole } from './access-control';
 import { resolveRouteForUser } from './navigation';
 import { appRoutes } from './routes';
 import { AccessControlPage } from './pages/AccessControlPage';
@@ -11,15 +11,15 @@ import { AuctionsPage } from './pages/AuctionsPage';
 import { SlotsPage } from './pages/SlotsPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { NewsPage } from './pages/NewsPage';
-import { fetchAuthValidation, loginToAuthService } from '../shared/api-client';
-import type { FrontendAuthToken, FrontendAuthValidation } from '../config/contracts';
-import {
-  clearStoredAccessToken,
-  getStoredSidebarCollapsed,
-  setStoredAccessToken,
-  setStoredSidebarCollapsed,
-} from '../config/session';
+import { getStoredSidebarCollapsed, setStoredSidebarCollapsed } from '../config/session';
 
+const roleOptions: UserRole[] = [
+  'OPERATIONS_MANAGER',
+  'PORT_ADMIN',
+  'AUCTION_OPERATOR',
+  'EXECUTIVE_STAKEHOLDER',
+  'ADMIN',
+];
 const SIDEBAR_BREAKPOINT_PX = 1100;
 const navIcons: Record<string, string> = {
   '/dashboard': '⌂',
@@ -43,11 +43,9 @@ function AccessBoundary({ role }: { role: UserRole }): JSX.Element {
 }
 
 function RoleSelector({
-  roleOptions,
   role,
   setRole,
 }: {
-  roleOptions: UserRole[];
   role: UserRole;
   setRole: (role: UserRole) => void;
 }): JSX.Element {
@@ -70,71 +68,13 @@ function RoleSelector({
   );
 }
 
-const resolveAssignedRoles = (roles: unknown): UserRole[] => {
-  const safeRoles: string[] = [];
-  if (Array.isArray(roles)) {
-    for (const role of roles) {
-      if (typeof role === 'string') {
-        safeRoles.push(role);
-      }
-    }
-  }
-
-  const mappedRoles: UserRole[] = [];
-  for (const externalRole of safeRoles) {
-    mappedRoles.push(mapExternalRoleToUserRole(externalRole));
-  }
-
-  const uniqueRoles: UserRole[] = [];
-  for (const mappedRole of mappedRoles) {
-    if (!uniqueRoles.includes(mappedRole)) {
-      uniqueRoles.push(mappedRole);
-    }
-  }
-
-  return uniqueRoles.length > 0 ? uniqueRoles : ['OPERATIONS_MANAGER'];
-};
-
 export function App(): JSX.Element {
   const location = useLocation();
-  const [assignedRoles, setAssignedRoles] = React.useState<UserRole[]>(['OPERATIONS_MANAGER']);
   const [role, setRole] = React.useState<UserRole>('OPERATIONS_MANAGER');
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-  const [authUserId, setAuthUserId] = React.useState<string>('');
-  const [authBusy, setAuthBusy] = React.useState(false);
-  const [authError, setAuthError] = React.useState<string | null>(null);
-  const [loginForm, setLoginForm] = React.useState({ username: 'admin', password: 'admin123' });
   const [isCompactSidebar, setIsCompactSidebar] = React.useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const allowedNavItems = appRoutes.filter((item) => item.allowedRoles.includes(role));
   const currentCapability = getRoleCapability(role);
-
-  React.useEffect(() => {
-    const hydrateSession = async (): Promise<void> => {
-      setAuthBusy(true);
-      setAuthError(null);
-      try {
-        const validation: FrontendAuthValidation = await fetchAuthValidation();
-        if (!validation.valid) {
-          setIsAuthenticated(false);
-          return;
-        }
-
-        const uniqueRoles = resolveAssignedRoles(validation.roles);
-        const primaryRole: UserRole = uniqueRoles[0] ?? 'OPERATIONS_MANAGER';
-        setAssignedRoles(uniqueRoles);
-        setRole(primaryRole);
-        setAuthUserId(validation.userId ?? 'authenticated-user');
-        setIsAuthenticated(true);
-      } catch {
-        setIsAuthenticated(false);
-      } finally {
-        setAuthBusy(false);
-      }
-    };
-
-    void hydrateSession();
-  }, []);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') {
@@ -178,87 +118,6 @@ export function App(): JSX.Element {
       return next;
     });
   };
-
-  const submitLogin = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    event.preventDefault();
-    setAuthBusy(true);
-    setAuthError(null);
-    try {
-      const token: FrontendAuthToken = await loginToAuthService(
-        loginForm.username,
-        loginForm.password
-      );
-      setStoredAccessToken(token.accessToken);
-      const uniqueRoles = resolveAssignedRoles(token.roles);
-      const primaryRole: UserRole = uniqueRoles[0] ?? 'OPERATIONS_MANAGER';
-      setAssignedRoles(uniqueRoles);
-      setRole(primaryRole);
-      setAuthUserId(token.userId);
-      setIsAuthenticated(true);
-    } catch (error) {
-      clearStoredAccessToken();
-      setIsAuthenticated(false);
-      setAuthError(
-        error instanceof Error
-          ? `Unable to login with provided credentials. ${error.message}`
-          : 'Unable to login with provided credentials.'
-      );
-    } finally {
-      setAuthBusy(false);
-    }
-  };
-
-  const logout = (): void => {
-    clearStoredAccessToken();
-    setIsAuthenticated(false);
-    setAssignedRoles(['OPERATIONS_MANAGER']);
-    setRole('OPERATIONS_MANAGER');
-    setAuthUserId('');
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <main className="main">
-        <section className="card" style={{ maxWidth: '520px', margin: '40px auto' }}>
-          <div className="brand" style={{ marginBottom: '12px' }}>
-            <BrandLogo />
-            <div>
-              <h2 className="page-heading" style={{ marginBottom: '8px' }}>
-                Stakeholder Portal Login
-              </h2>
-              <div className="kpi-label">
-                Login with role-specific credentials. Feature access is resolved from your assigned
-                role profile.
-              </div>
-            </div>
-          </div>
-          <form className="governance-form" onSubmit={(event) => void submitLogin(event)}>
-            <input
-              required
-              placeholder="Username"
-              value={loginForm.username}
-              onChange={(event) =>
-                setLoginForm((current) => ({ ...current, username: event.target.value }))
-              }
-            />
-            <input
-              required
-              type="password"
-              placeholder="Password"
-              value={loginForm.password}
-              onChange={(event) =>
-                setLoginForm((current) => ({ ...current, password: event.target.value }))
-              }
-            />
-            <button className="primary-button" type="submit" disabled={authBusy}>
-              {authBusy ? 'Signing in…' : 'Sign in'}
-            </button>
-          </form>
-          {authError ? <div className="notice compact-notice">{authError}</div> : null}
-        </section>
-      </main>
-    );
-  }
 
   return (
     <div
@@ -344,14 +203,9 @@ export function App(): JSX.Element {
             </button>
             <span className="tag good">Staging Live</span>
             <span className="tag">API Connectivity: Healthy</span>
-            <span className="tag">User: {authUserId}</span>
+            <span className="tag">Notifications: 2</span>
           </div>
-          <div className="cluster">
-            <RoleSelector roleOptions={assignedRoles} role={role} setRole={setRole} />
-            <button className="secondary-button" type="button" onClick={logout}>
-              Sign out
-            </button>
-          </div>
+          <RoleSelector role={role} setRole={setRole} />
         </header>
 
         <main className="main">

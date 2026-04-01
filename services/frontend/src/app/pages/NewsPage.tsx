@@ -13,14 +13,6 @@ interface OperationalBulletin {
   timestamp: string;
 }
 
-type DeliveryChannel = 'Portal' | 'Email' | 'SMS';
-
-interface EscalationRoute {
-  id: string;
-  name: string;
-  owner: string;
-}
-
 const fallbackBulletins: OperationalBulletin[] = [
   {
     id: 'OPS-401',
@@ -57,17 +49,6 @@ export function NewsPage(): JSX.Element {
   const [message, setMessage] = React.useState<string | null>(null);
   const [severityFilter, setSeverityFilter] = React.useState<'All' | BulletinSeverity>('All');
   const [bulletins, setBulletins] = React.useState<OperationalBulletin[]>(fallbackBulletins);
-  const [selectedChannels, setSelectedChannels] = React.useState<DeliveryChannel[]>([
-    'Portal',
-    'Email',
-  ]);
-  const [activeRouteId, setActiveRouteId] = React.useState('ROUTE-OPS-1');
-
-  const escalationRoutes: EscalationRoute[] = [
-    { id: 'ROUTE-OPS-1', name: 'Operations Command Chain', owner: 'NOC Duty Manager' },
-    { id: 'ROUTE-OPS-2', name: 'Port Congestion Response', owner: 'Port Operations Lead' },
-    { id: 'ROUTE-OPS-3', name: 'Carrier Exception Routing', owner: 'Carrier Relations Team' },
-  ];
 
   const hydrateOperationalNews = React.useCallback(async (): Promise<void> => {
     setIsLoading(true);
@@ -126,17 +107,6 @@ export function NewsPage(): JSX.Element {
     );
   };
 
-  const toggleChannel = (channel: DeliveryChannel): void => {
-    setSelectedChannels((current) =>
-      current.includes(channel)
-        ? current.filter((selected) => selected !== channel)
-        : [...current, channel]
-    );
-  };
-
-  const activeRoute =
-    escalationRoutes.find((route) => route.id === activeRouteId) ?? escalationRoutes[0];
-
   return (
     <section>
       <div className="page-hero">
@@ -183,46 +153,6 @@ export function NewsPage(): JSX.Element {
         </button>
       </div>
       {message ? <div className="notice compact-notice">{message}</div> : null}
-
-      <article className="card" style={{ marginBottom: '16px' }}>
-        <div className="card-header-row">
-          <h3 style={{ margin: 0 }}>Delivery and escalation controls</h3>
-          <span className="badge ok">Policy scoped</span>
-        </div>
-        <p className="kpi-label">
-          Configure communication channels and escalation route for active operational bulletins.
-        </p>
-        <div className="approval-actions" style={{ marginBottom: '12px' }}>
-          {(['Portal', 'Email', 'SMS'] as DeliveryChannel[]).map((channel) => (
-            <button
-              key={channel}
-              className="secondary-button"
-              type="button"
-              onClick={() => toggleChannel(channel)}
-            >
-              {selectedChannels.includes(channel) ? `✓ ${channel}` : channel}
-            </button>
-          ))}
-        </div>
-        <label className="kpi-label" htmlFor="route-select">
-          Incident escalation route
-        </label>
-        <select
-          id="route-select"
-          value={activeRouteId}
-          onChange={(event) => setActiveRouteId(event.target.value)}
-        >
-          {escalationRoutes.map((route) => (
-            <option key={route.id} value={route.id}>
-              {route.name}
-            </option>
-          ))}
-        </select>
-        <div className="notice compact-notice" style={{ marginTop: '12px' }}>
-          Active route owner: {activeRoute.owner} · Channels:{' '}
-          {selectedChannels.length > 0 ? selectedChannels.join(', ') : 'No channels selected'}
-        </div>
-      </article>
 
       <article className="card">
         <div className="stack-list">
