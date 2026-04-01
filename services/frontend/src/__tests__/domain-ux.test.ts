@@ -1,5 +1,6 @@
 import { buildKpiDeltaView } from '../features/analytics/kpi';
 import { selectAuctionWinner } from '../features/auctions/board';
+import { buildBulletinPreview, resolveEffectiveRoute } from '../features/news/communications';
 import { recommendSlots } from '../features/slots/planner';
 import { buildTrackingTimeline } from '../features/tracking/timeline';
 import { buildUlipSyncBanner } from '../features/ulip/sync-status';
@@ -62,5 +63,31 @@ describe('domain UX implementation tracks', () => {
 
     expect(critical.severity).toBe('critical');
     expect(warning.severity).toBe('warning');
+  });
+
+  it('auto-routes communications to congestion response when critical bulletin exists', () => {
+    const route = resolveEffectiveRoute(
+      ['Info', 'Critical'],
+      'ROUTE-OPS-1',
+      [
+        { id: 'ROUTE-OPS-1', name: 'Operations Command Chain', owner: 'NOC Duty Manager' },
+        { id: 'ROUTE-OPS-2', name: 'Port Congestion Response', owner: 'Port Operations Lead' },
+      ],
+    );
+
+    expect(route.id).toBe('ROUTE-OPS-2');
+  });
+
+  it('builds bulletin preview text from selected communication template', () => {
+    const preview = buildBulletinPreview(
+      'TPL-OPS-CRIT',
+      [
+        { id: 'TPL-OPS-STD', name: 'Standard', bodyPrefix: '[OPS NOTICE]' },
+        { id: 'TPL-OPS-CRIT', name: 'Critical', bodyPrefix: '[CRITICAL ALERT]' },
+      ],
+      'Auction lane saturation alert',
+    );
+
+    expect(preview).toBe('[CRITICAL ALERT] Auction lane saturation alert');
   });
 });
