@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY packages ./packages
 COPY services ./services
-COPY tsconfig.json jest.config.js jest.setup.js .eslintrc.json ./
+COPY tsconfig.json jest.config.js jest.setup.js ./
 RUN npm ci
 RUN npm run build --workspace @port-to-shelf/shared-types && npm run build:web --workspace @port-to-shelf/frontend
 
